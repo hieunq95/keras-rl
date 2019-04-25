@@ -19,7 +19,7 @@ ENV_NAME = 'CartPole-v0'
 env = gym.make(ENV_NAME)
 np.random.seed(123)
 env.seed(123)
-nb_actions = env.action_space.n
+nb_actions = env.action_space.n # e.g 4**6
 
 print(nb_actions, env.observation_space.shape)
 # Next, we build a very simple model.

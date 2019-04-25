@@ -1,2 +1,3 @@
 from gym_foo.envs.foo_env import FooEnv
 from gym_foo.envs.one_round_nondeterministic_reward import OneRoundNondeterministicRewardEnv
+from gym_foo.envs.mobile_cloud_machine_learning import MCML
