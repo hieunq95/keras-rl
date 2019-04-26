@@ -17,51 +17,78 @@ delta = 1 # δ(Joule): energy unit
 # Hieunq: newly defined variables
 F_n = 10 # maximum number of CPU shares
 C_n = 10 # capacity of energy storage
+Dmax = N * D_n - 1 # offset = 1
+Emax = N * E_n - 1
+
 
 class MCML(gym.Env):
     """
     Mobile cloud machine learning environment
+
+    - State space: Sn = {(fn , cn ) ; fn ∈ {0, 1, . . . , Fn } , cn ∈ {0, 1, . . . , Cn } ,
+    - Action space: A = {(d1 , e1 , . . . , dN , eN );dn ≤ Dn , en ≤ cn , fn ̄≤ μfn, n = (1, . . . , N )}
+    - Transition: c_n' = c_n - e_n + A_n
     """
     def __init__(self):
 
         high_action = np.array([D_n, E_n])
         high_action = np.repeat(high_action, N)
 
-        high_space = np.array([[F_n],
-                               [C_n]]) # shape (2,1)
-        high_space = np.reshape(high_space, [1, 2]) # shape (1,2)
-        high_space = np.repeat(high_space, N, axis=0) # shape (3,2)
-
-        self.observation_space = spaces.Box(np.zeros(high_space.shape),
-                                            high_space, dtype=np.int) # Sn = {(fn , cn )}
+        # For simplicity, assume F_n = C_n
+        self.observation_space = spaces.Box(low=0, high=F_n, shape=(2*N,), dtype=int)
+        # MultiDiscrete samples all actions at one time and return random value for each action !
         self.action_space = spaces.MultiDiscrete(high_action) # A = {(d_1, e_1, ..., d_N, e_N)}
 
         self.seed()
+        self.state = None
         self.reset()
 
     def step(self, action):
+        print("debug: action {}".format(action))
+        print("debug: action.sample() {}".format(self.action_space.sample()))
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         state = self.state
-        f_n, c_n = state
-        # state transition
-        # Sn = {(fn , cn ) ; fn ∈ {0, 1, . . . , Fn } , cn ∈ {0, 1, . . . , Cn } ,
-        # A = {(d1 , e1 , . . . , dN , eN );dn ≤ Dn , en ≤ cn , fn ̄≤ μfn, n = (1, . . . , N )}
-        f_n = np.random.randint(F_n + 1)
+        # accumulated_data, energy_consumption, training_latency = 0, 0, 0
 
-        # let's assume action is e_n
-        e_n = action
-        # c_n = np.amin(c_n - e_n + A_n, C_n)
-        self.state = (f_n, c_n)
-        next_state = state
-        done = False
-        return state, reward, done, {}
+        f_array, c_array, d_array, e_array, A_array = [], [], [], [], []
+        radom_state = self.observation_space.sample() # random transition following uniform distribution
 
+        for i in range(state.shape[0]): # 0 to 5
+            if i < N:
+                f_array.append(radom_state[i]) # shape (3, ), append first 3 elements
+            else:
+                c_array.append(state[i]) # shape (3, )
 
-    def get_observation(self):
-        ...
+        for j in range(action.shape[0]):
+            if j < N:
+                d_array.append(action[j])
+            else:
+                e_array.append(action[j]) # shape (3, ) append last 3 elements
+
+        # c_array = c_array - e_array  + A_array
+        # For simplicity, assume A_array = zero
+        A_array = 0
+        c_array = np.subtract(c_array, e_array)
+        c_array = c_array + A_array
+
+        # update terminal variables
+        accumulated_data = sum(d_array)
+        energy_consumption = sum(e_array)
+
+        self.state = np.array([f_array, c_array], dtype=int).flatten() # state update
+
+        done = accumulated_data >= Dmax or energy_consumption >= Emax
+
+        if not done:
+            reward = accumulated_data.__float__() / Dmax - energy_consumption.__float__() / Emax
+        else:
+            reward = 0
+
+        return np.array(self.state), reward, done, {}
 
     def reset(self):
-        ...
+        self.state = self.nprandom.randint(low=0, high=F_n, size=self.observation_space.shape) # not so sure
+        return self.state
 
     def seed(self, seed=None):
         self.nprandom, seed = seeding.np_random(seed)
