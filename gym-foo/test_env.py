@@ -2,23 +2,27 @@ import gym
 import gym_foo
 import random as random
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ENV_NAME = 'OneRoundNondeterministicReward-v0'
-# ENV_NAME = 'foo-v0'
 ENV_NAME = 'mcml-v0'
 env = gym.make(ENV_NAME)
-print(env.observation_space, env.action_space)
+print(env.observation_space, env.action_space, env.action_space.nvec)
 env.reset()
 
-# action = [0, 1]
-#
-# EPISODE = 5
-# for t in range(EPISODE):
-#
-#     # get reward from taking an random action
-#     observation, reward, done, info = env.step(random.randrange(env.action_space.n))
-#     print(observation, reward, done, info)
-for _ in range(10):
-    a = np.random.randint(0, 10 + 1)
-    print(a)
+nb_actions = 1
+for i in env.action_space.nvec:
+    nb_actions = nb_actions * i
+# Test step()
+for _ in range(5):
+    state, reward, done, info = env.step(env.action_space.sample())
+    env.reset()
+    print(state, reward, done, info)
+
+print(nb_actions)
+nprandom = np.random.RandomState()
+reset_state = nprandom.randint(low=0, high=10, size=env.observation_space.shape)
+print(reset_state)
+
+
 

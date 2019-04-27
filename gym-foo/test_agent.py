@@ -1,5 +1,8 @@
+# From dqn_cartpole.py
+
 import numpy as np
 import gym
+import gym_foo
 import pylab
 
 from keras.models import Sequential
@@ -11,29 +14,19 @@ from rl.policy import BoltzmannQPolicy, GreedyQPolicy
 from rl.memory import SequentialMemory
 
 
-<<<<<<< HEAD
-# ENV_NAME = 'CartPole-v0'
-ENV_NAME = 'MountainCar-v0'
-=======
-ENV_NAME = 'CartPole-v0'
-# ENV_NAME = 'MountainCar-v0'
+ENV_NAME = 'mcml-v0'
 
->>>>>>> 40e0626baf37ff942e481b14d89198adced30846
 
 # Get the environment and extract the number of actions.
 env = gym.make(ENV_NAME)
 np.random.seed(123)
 env.seed(123)
-<<<<<<< HEAD
-nb_actions = env.action_space.n
-<<<<<<< HEAD
-=======
-=======
-nb_actions = env.action_space.n # e.g 4**6
->>>>>>> 79fa5c2c3ae63959e9ee2ded0a6828f93765aa77
+nb_actions = 1
+# nb_actions = env.action_space.n # e.g 4**6
+for i in env.action_space.nvec:
+    nb_actions *= i
 
-print(nb_actions, env.observation_space.shape)
->>>>>>> 40e0626baf37ff942e481b14d89198adced30846
+# print(nb_actions, env.observation_space.shape)
 # Next, we build a very simple model.
 model = Sequential()
 model.add(Flatten(input_shape=(1,) + env.observation_space.shape)) # input #input_shape = (1,) + (4,)
@@ -45,14 +38,14 @@ model.add(Dense(16))
 model.add(Activation('relu'))
 model.add(Dense(nb_actions)) # output
 model.add(Activation('linear'))
-print(model.summary())
+# print(model.summary())
 print(env.observation_space.sample())
 
 # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
 # even the metrics!
 memory = SequentialMemory(limit=50000, window_length=1)
-policy = BoltzmannQPolicy()
-# policy = GreedyQPolicy()
+# policy = BoltzmannQPolicy()
+policy = GreedyQPolicy()
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
                target_model_update=1e-2, policy=policy, enable_double_dqn=True)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
@@ -67,7 +60,7 @@ episode_history = np.arange(0, len(reward_history))
 # print(reward_history, episode_history)
 # plot score and save image
 pylab.plot(episode_history, reward_history, 'b')
-pylab.savefig("./cartpole_history.png")
+pylab.savefig("./mcml.png")
 
 # After training is done, we save the final weights.
 dqn.save_weights('dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
