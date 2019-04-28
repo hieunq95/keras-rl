@@ -13,20 +13,20 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import BoltzmannQPolicy, GreedyQPolicy
 from rl.memory import SequentialMemory
 
-
 ENV_NAME = 'mcml-v0'
-
+# ENV_NAME = 'MountainCarContinuous-v0'
+# ENV_NAME = 'MountainCar-v0'
 
 # Get the environment and extract the number of actions.
 env = gym.make(ENV_NAME)
 np.random.seed(123)
 env.seed(123)
-nb_actions = 1
-# nb_actions = env.action_space.n # e.g 4**6
-for i in env.action_space.nvec:
-    nb_actions *= i
+# nb_actions = 1
+nb_actions = env.action_space.n # e.g 4**6 # sulution for action which is not a discrete ?
+# for i in env.action_space.nvec:
+#     nb_actions *= i
 
-# print(nb_actions, env.observation_space.shape)
+print(nb_actions, env.observation_space.shape)
 # Next, we build a very simple model.
 model = Sequential()
 model.add(Flatten(input_shape=(1,) + env.observation_space.shape)) # input #input_shape = (1,) + (4,)
@@ -47,7 +47,7 @@ memory = SequentialMemory(limit=50000, window_length=1)
 # policy = BoltzmannQPolicy()
 policy = GreedyQPolicy()
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
-               target_model_update=1e-2, policy=policy, enable_double_dqn=True)
+               target_model_update=1e-2, policy=policy, enable_double_dqn=False)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 # Okay, now it's time to learn something! We visualize the training here for show, but this
 # slows down training quite a lot. You can always safely abort the training prematurely using
@@ -66,5 +66,5 @@ pylab.savefig("./mcml.png")
 dqn.save_weights('dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 
 # Finally, evaluate our algorithm for 5 episodes.
-dqn.test(env, nb_episodes=5, visualize=True)
+# dqn.test(env, nb_episodes=5, visualize=True)
 

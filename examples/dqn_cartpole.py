@@ -10,30 +10,16 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import BoltzmannQPolicy, GreedyQPolicy
 from rl.memory import SequentialMemory
 
-
-<<<<<<< HEAD
-# ENV_NAME = 'CartPole-v0'
-ENV_NAME = 'MountainCar-v0'
-=======
 ENV_NAME = 'CartPole-v0'
 # ENV_NAME = 'MountainCar-v0'
-
->>>>>>> 40e0626baf37ff942e481b14d89198adced30846
 
 # Get the environment and extract the number of actions.
 env = gym.make(ENV_NAME)
 np.random.seed(123)
 env.seed(123)
-<<<<<<< HEAD
-nb_actions = env.action_space.n
-<<<<<<< HEAD
-=======
-=======
-nb_actions = env.action_space.n # e.g 4**6
->>>>>>> 79fa5c2c3ae63959e9ee2ded0a6828f93765aa77
 
-print(nb_actions, env.observation_space.shape)
->>>>>>> 40e0626baf37ff942e481b14d89198adced30846
+nb_actions = env.action_space.n
+
 # Next, we build a very simple model.
 model = Sequential()
 model.add(Flatten(input_shape=(1,) + env.observation_space.shape)) # input #input_shape = (1,) + (4,)
