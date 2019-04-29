@@ -13,18 +13,26 @@ env.reset()
 # nb_actions = 1
 # for i in env.action_space.nvec:
 #     nb_actions = nb_actions * i
-# # Test step()
-# for _ in range(5):
-#     state, reward, done, info = env.step(env.action_space.sample())
-#     env.reset()
-#     print(state, reward, done, info)
-#
-# print(nb_actions)
-nprandom = np.random.RandomState()
-reset_state = nprandom.randint(low=0, high=10, size=env.observation_space.shape)
-print(reset_state)
+# Test step()
+# print(np.min([33, 8]))
+# print(np.random.randint(0, 5))
+print(env.action_space.shape, env.observation_space.shape)
 
-print( 8 % 5)
+xPoints, yPoints = [], []
+for x in range(100):
+    state, reward, done, info = env.step(env.action_space.sample())
+    xPoints.append(x)
+    yPoints.append(reward)
+    env.reset()
+    print(state, reward, done, info)
+plt.plot(xPoints, yPoints)
+plt.show()
+
+# print(nb_actions)
+# nprandom = np.random.RandomState()
+# reset_state = nprandom.randint(low=0, high=10, size=env.observation_space.shape)
+# print(reset_state)
+
 
 
 
