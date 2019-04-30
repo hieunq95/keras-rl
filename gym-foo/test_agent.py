@@ -2,7 +2,6 @@
 
 import numpy as np
 import gym
-import gym_foo
 import pylab
 
 from keras.models import Sequential
@@ -13,16 +12,21 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import BoltzmannQPolicy, GreedyQPolicy
 from rl.memory import SequentialMemory
 
-ENV_NAME = 'mcml-v0'
+from mcml_processor import MCMLProcessor
+from mcml_env import MCML
+
+# ENV_NAME = 'mcml-v0'
 # ENV_NAME = 'MountainCarContinuous-v0'
 # ENV_NAME = 'MountainCar-v0'
-
 # Get the environment and extract the number of actions.
-env = gym.make(ENV_NAME)
+# env = gym.make(ENV_NAME)
+
+env = MCML()
+
 np.random.seed(123)
 env.seed(123)
-# nb_actions = 1
-nb_actions = env.action_space.shape[0] # e.g 4**6 # sulution for action which is not a discrete ?
+nb_actions = 4 ** len(env.action_space.nvec)
+# nb_actions = env.action_space # e.g 4**6 # sulution for action which is not a discrete ?
 # for i in env.action_space.nvec:
 #     nb_actions *= i
 
@@ -39,24 +43,28 @@ model.add(Activation('relu'))
 model.add(Dense(nb_actions)) # output
 model.add(Activation('linear'))
 # print(model.summary())
-print(env.observation_space.sample())
+# print(env.observation_space.sample())
 
 # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
 # even the metrics!
 memory = SequentialMemory(limit=50000, window_length=1)
 # policy = BoltzmannQPolicy()
 policy = GreedyQPolicy()
+processor = MCMLProcessor()
+
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
-               target_model_update=1e-2, policy=policy, enable_double_dqn=False)
+               target_model_update=1e-2, policy=policy, enable_double_dqn=False, processor=processor)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 # Okay, now it's time to learn something! We visualize the training here for show, but this
 # slows down training quite a lot. You can always safely abort the training prematurely using
 # Ctrl + C.
-learning_history = dqn.fit(env, nb_steps=50000, visualize=False, verbose=2, nb_max_episode_steps=100)
+# print(dqn.metrics_names[:])
+
+learning_history = dqn.fit(env, nb_steps=50000 * 2, visualize=False, verbose=2, nb_max_episode_steps=100)
 
 reward_history = learning_history.history.get('episode_reward')
 episode_history = np.arange(0, len(reward_history))
-print(reward_history)
+# print(reward_history)
 # print(reward_history, episode_history)
 # plot score and save image
 pylab.plot(episode_history, reward_history, 'b')
