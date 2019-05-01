@@ -20,16 +20,15 @@ class MCML(gym.Env):
     """
     def __init__(self):
 
-        high_action = np.array([parameters.data_max+1, parameters.energy_max+1])
-        high_action = np.repeat(high_action, parameters.nb_devices)
+        high_action = np.array([parameters.DATA_MAX+1, parameters.ENERGY_MAX+1])
+        high_action = np.repeat(high_action, parameters.NB_DEVICES)
 
         # For simplicity, assume F_n = C_n
-        self.observation_space = spaces.Box(low=0, high=parameters.cpushare_max,
-                                            shape=(2 * parameters.nb_devices,), dtype=int)
+        self.observation_space = spaces.Box(low=0, high=parameters.CPUSHARE_MAX,
+                                            shape=(2 * parameters.NB_DEVICES,), dtype=int)
         # MultiDiscrete samples all actions at one time and return random value for each action !
         self.action_space = spaces.MultiDiscrete(high_action) # A = {(d_1, e_1, ..., d_N, e_N)}
-        # self.action_space = spaces.Discrete(2)
-        # self.action_space = spaces.Box(low=0, high=E_n, shape=(2,), dtype=int)
+        self.accumulated_data = 0
 
         self.seed()
         self.reset()
@@ -39,37 +38,68 @@ class MCML(gym.Env):
         # print("debug: action.sample() {}".format(self.action_space.sample()))
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
 
+
         state = self.state
+        # extract state information
+        f_cpu = np.random.randint(0, parameters.CPUSHARE_MAX+1, size=3) # fn get an random action
+        c_unit = state.reshape([2, parameters.NB_DEVICES])[1].copy() # copy cn from current state
 
-        f_cpu = np.random.randint(0, parameters.cpushare_max+1, size=3) # fn get an random action
-        c_unit = state.reshape([2, parameters.nb_devices])[1].copy() # copy cn from current state
-
-        # add fn penalty later
-        d_unit = np.asarray(action).reshape([2, parameters.nb_devices])[0].copy()
-        e_unit = np.asarray(action).reshape([2, parameters.nb_devices])[1].copy() # copy last 3 elements
+        # extract action information, add fn penalty later
+        d_unit = np.asarray(action).reshape([2, parameters.NB_DEVICES])[0].copy()
+        e_unit = np.asarray(action).reshape([2, parameters.NB_DEVICES])[1].copy() # copy last 3 elements
 
         #state transition
+        # TODO: add An
         c_unit_next = np.subtract(c_unit, e_unit)
 
         total_data = np.sum(d_unit)
         total_energy = np.sum(e_unit)
 
-        if np.amin(c_unit_next) < 0:
-            reward = - 10
+        reward = 0
+        state_changed = True
+        self.accumulated_data += total_data
+        # check en < cn and en/dn constrain
+        for i in range(e_unit.shape[0]):
+            if d_unit[i] == 0:
+                if e_unit[i] <= c_unit[i]:
+                    # done = False
+                    reward = reward
+                else:
+                    # done = True
+                    state_changed = False
+                    reward -= 5
+            else:
+                if e_unit[i] <= c_unit[i] and \
+                    e_unit[i] / d_unit[i] <= ((f_cpu[i] / parameters.CPU_REQUIRED_CONSTANT) ** 2):
+                    # done = False
+                    reward = reward
+                else:
+                    # done = True
+                    state_changed = False
+                    reward -= 5
+
+        if self.accumulated_data > parameters.MAX_ACCUMULATED_DATA:
+            done = True
         else:
-            reward = parameters.scale_factor * total_data - total_energy
+            done = False
 
-        next_state = np.array([f_cpu, c_unit_next]).flatten()
+        done = bool(done)
+        reward += 10 * (parameters.SCALE_FACTOR * total_data / parameters.DATA_THRESLOD \
+                  - total_energy / parameters.ENERGY_THRESOLD)
 
-        done = False
+        if state_changed:
+            next_state = np.array([f_cpu, c_unit_next]).flatten()
+            self.state = next_state
+        else:
+            self.state = state
+
         # self.state = self.observation_space.sample()
-        self.state = next_state
         # print(action, e_unit, state, f_cpu, c_unit,c_unit_next, next_state) # [2 2 2 2 0 1]
-
         return np.array(self.state), reward, done, {}
 
     def reset(self):
-        self.state = self.nprandom.randint(low=0, high=parameters.cpushare_max, size=self.observation_space.shape) # not so sure
+        self.state = self.nprandom.randint(low=0, high=parameters.CPUSHARE_MAX, size=self.observation_space.shape) # not so sure
+        self.accumulated_data = 0
         return self.state
 
     def seed(self, seed=None):

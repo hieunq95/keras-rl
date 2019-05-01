@@ -3,6 +3,7 @@ import gym_foo
 import random as random
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 from mcml_processor import MCMLProcessor
 
@@ -36,6 +37,8 @@ env.reset()
 # print(np.random.randint(0, 5))
 print(env.action_space.shape, env.observation_space.shape, env.action_space.sample())
 
+print(math.sqrt(10**18) / (0.6 * (10**9)))
+print((3/1.66)**2)
 
 # xPoints, yPoints = [], []
 # for x in range(10):
@@ -52,7 +55,7 @@ print(env.action_space.shape, env.observation_space.shape, env.action_space.samp
 # metrics_names += MCMLProcessor.metrics_names()
 # print(metrics_names)
 
-print(base10toN(4092, 4))
+# print(base10toN(4092, 4))
 
 
 

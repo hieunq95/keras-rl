@@ -27,15 +27,15 @@ def _convert_action(action):
 
     :return: action in array
     """
-    data_base = parameters.data_max + 1
-    energy_base = parameters.energy_max + 1
-    action_size = 2 * parameters.nb_devices
+    data_base = parameters.DATA_MAX + 1
+    energy_base = parameters.ENERGY_MAX + 1
+    action_size = 2 * parameters.NB_DEVICES
     data_array, energy_array = [], []
     action_clone = action
 
     # e.g. 3469 to 312031
-    for i in range( 2 * parameters.nb_devices):
-        if i < parameters.nb_devices:
+    for i in range( 2 * parameters.NB_DEVICES):
+        if i < parameters.NB_DEVICES:
             divisor = data_base ** (action_size - (i + 1))
             data_i = action_clone // divisor
             action_clone -= data_i * divisor
@@ -58,7 +58,7 @@ class MCMLProcessor(Processor):
         self.metrics_names = []
 
     def process_action(self, action):
-        # processed_action = np.random.randint(0, parameters.energy_max + 1, size=6)
+        # processed_action = np.random.randint(0, parameters.ENERGY_MAX + 1, size=6)
         processed_action = _convert_action(action)
 
         return processed_action

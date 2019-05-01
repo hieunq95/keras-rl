@@ -54,13 +54,17 @@ processor = MCMLProcessor()
 
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
                target_model_update=1e-2, policy=policy, enable_double_dqn=False, processor=processor)
+
+# dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory,
+#                target_model_update=1e-2, policy=policy, enable_double_dqn=False, processor=processor)
+
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 # Okay, now it's time to learn something! We visualize the training here for show, but this
 # slows down training quite a lot. You can always safely abort the training prematurely using
 # Ctrl + C.
 # print(dqn.metrics_names[:])
 
-learning_history = dqn.fit(env, nb_steps=50000 * 2, visualize=False, verbose=2, nb_max_episode_steps=100)
+learning_history = dqn.fit(env, nb_steps=50000 * 2, visualize=False, verbose=2, nb_max_episode_steps=None)
 
 reward_history = learning_history.history.get('episode_reward')
 episode_history = np.arange(0, len(reward_history))
