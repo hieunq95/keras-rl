@@ -14,9 +14,10 @@ C_capacity = 3 # capacity of energy storage
 # Emax = N * E_n - 1
 Dmax = N * D_n
 Emax = N * E_n
-scale_factor = 3
+scale_factor = 2
 F_THRESOLD = 3
 max_accumulated_data = 1500
+reward_base = 5
 
 class Parameters():
     def __init__(self):
@@ -30,3 +31,4 @@ class Parameters():
         self.ENERGY_THRESOLD = Emax
         self.DATA_THRESLOD = Dmax
         self.MAX_ACCUMULATED_DATA = max_accumulated_data
+        self.REWARD_BASE = reward_base

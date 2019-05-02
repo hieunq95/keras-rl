@@ -58,6 +58,7 @@ class MCML(gym.Env):
         reward = 0
         state_changed = True
         self.accumulated_data += total_data
+
         # check en < cn and en/dn constrain
         for i in range(e_unit.shape[0]):
             if d_unit[i] == 0:
@@ -67,7 +68,8 @@ class MCML(gym.Env):
                 else:
                     # done = True
                     state_changed = False
-                    reward -= 5
+                    # reward -= 5
+                    reward = reward
             else:
                 if e_unit[i] <= c_unit[i] and \
                     e_unit[i] / d_unit[i] <= ((f_cpu[i] / parameters.CPU_REQUIRED_CONSTANT) ** 2):
@@ -86,6 +88,9 @@ class MCML(gym.Env):
         done = bool(done)
         reward += 10 * (parameters.SCALE_FACTOR * total_data / parameters.DATA_THRESLOD \
                   - total_energy / parameters.ENERGY_THRESOLD)
+        # add an reward_base to make sure reward > 0 -> encourage maximize positive long term value,
+        # rather than negative
+        reward += parameters.REWARD_BASE
 
         if state_changed:
             next_state = np.array([f_cpu, c_unit_next]).flatten()
@@ -98,7 +103,7 @@ class MCML(gym.Env):
         return np.array(self.state), reward, done, {}
 
     def reset(self):
-        self.state = self.nprandom.randint(low=0, high=parameters.CPUSHARE_MAX, size=self.observation_space.shape) # not so sure
+        self.state = self.nprandom.randint(low=0, high=parameters.CPUSHARE_MAX + 1, size=self.observation_space.shape) # not so sure
         self.accumulated_data = 0
         return self.state
 
