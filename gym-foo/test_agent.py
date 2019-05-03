@@ -16,19 +16,14 @@ from mcml_processor import MCMLProcessor
 from mcml_env import MCML
 from eps_greedy_policy import MyEpsGreedy
 
-# ENV_NAME = 'mcml-v0'
-# ENV_NAME = 'MountainCarContinuous-v0'
-# ENV_NAME = 'MountainCar-v0'
-# Get the environment and extract the number of actions.
-# env = gym.make(ENV_NAME)
-
 env = MCML()
+ENV_NAME = 'mcml-test-2'
 
 np.random.seed(123)
 env.seed(123)
 nb_actions = 4 ** len(env.action_space.nvec)
 
-NB_STEPS = 400000
+NB_STEPS = 1000000
 # nb_actions = env.action_space # e.g 4**6 # sulution for action which is not a discrete ?
 # for i in env.action_space.nvec:
 #     nb_actions *= i
@@ -77,7 +72,8 @@ episode_history = np.arange(0, len(reward_history))
 # print(reward_history, episode_history)
 # plot score and save image
 pylab.plot(episode_history, reward_history, 'b')
-pylab.savefig("./mcml.png")
+pylab.savefig("./mcml-test-{}.png".format(ENV_NAME))
+pylab.show()
 
 # After training is done, we save the final weights.
 dqn.save_weights('dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)

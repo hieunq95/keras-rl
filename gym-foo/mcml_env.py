@@ -37,8 +37,6 @@ class MCML(gym.Env):
         # print("debug: action {}".format(action))
         # print("debug: action.sample() {}".format(self.action_space.sample()))
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-
-
         state = self.state
         # extract state information
         f_cpu = np.random.randint(0, parameters.CPUSHARE_MAX+1, size=3) # fn get an random action
@@ -50,7 +48,12 @@ class MCML(gym.Env):
 
         #state transition
         # TODO: add An
+        A_n = np.random.poisson(parameters.LAMBDA, size=parameters.NB_DEVICES)
         c_unit_next = np.subtract(c_unit, e_unit)
+        c_unit_next = np.asarray([c_unit_next[i] + A_n[i] for i in range(len(c_unit_next))])
+        c_MAX = np.full((parameters.NB_DEVICES,), parameters.CAPACITY_MAX, dtype=int)
+
+        c_unit_next = np.asarray([np.min([c_unit_next[i], c_MAX[i]]) for i in range(len(c_unit_next))])
 
         total_data = np.sum(d_unit)
         total_energy = np.sum(e_unit)
@@ -59,26 +62,22 @@ class MCML(gym.Env):
         state_changed = True
         self.accumulated_data += total_data
 
+        latency = np.full((parameters.NB_DEVICES,), 0.0)
+
         # check en < cn and en/dn constrain
         for i in range(e_unit.shape[0]):
-            if d_unit[i] == 0:
-                if e_unit[i] <= c_unit[i]:
-                    # done = False
-                    reward = reward
+            if e_unit[i] != 0 and d_unit[i] != 0:
+                cpu_require = np.full((parameters.NB_DEVICES,), 0)
+                cpu_require[i] = (parameters.DELTA * e_unit[i]) / (parameters.TAU * parameters.NU * d_unit[i])
+                cpu_require[i] = cpu_require[i] ** 0.5
+                if cpu_require[i] <= parameters.MICRO * f_cpu[i] and e_unit[i] <= c_unit[i]:
+                    latency[i] = parameters.NU * d_unit[i] / cpu_require[i]
                 else:
-                    # done = True
-                    state_changed = False
-                    # reward -= 5
-                    reward = reward
-            else:
-                if e_unit[i] <= c_unit[i] and \
-                    e_unit[i] / d_unit[i] <= ((f_cpu[i] / parameters.CPU_REQUIRED_CONSTANT) ** 2):
-                    # done = False
-                    reward = reward
-                else:
-                    # done = True
-                    state_changed = False
+                    latency = latency
                     reward -= 5
+                    state_changed = False
+            else:
+                latency = latency
 
         if self.accumulated_data > parameters.MAX_ACCUMULATED_DATA:
             done = True
@@ -86,8 +85,10 @@ class MCML(gym.Env):
             done = False
 
         done = bool(done)
+        latency_max = np.amax(latency)
+
         reward += 10 * (parameters.SCALE_FACTOR * total_data / parameters.DATA_THRESLOD \
-                  - total_energy / parameters.ENERGY_THRESOLD)
+                  - total_energy / parameters.ENERGY_THRESOLD - latency_max / parameters.LATENCY_MAX)
         # add an reward_base to make sure reward > 0 -> encourage maximize positive long term value,
         # rather than negative
         reward += parameters.REWARD_BASE
@@ -98,9 +99,12 @@ class MCML(gym.Env):
         else:
             self.state = state
 
+        info = {"reward": reward,
+                "total_data": total_data,
+                "total_energy": total_energy}
         # self.state = self.observation_space.sample()
         # print(action, e_unit, state, f_cpu, c_unit,c_unit_next, next_state) # [2 2 2 2 0 1]
-        return np.array(self.state), reward, done, {}
+        return np.array(self.state), reward, done, info
 
     def reset(self):
         self.state = self.nprandom.randint(low=0, high=parameters.CPUSHARE_MAX + 1, size=self.observation_space.shape) # not so sure
