@@ -72,11 +72,11 @@ episode_history = np.arange(0, len(reward_history))
 # print(reward_history, episode_history)
 # plot score and save image
 pylab.plot(episode_history, reward_history, 'b')
-pylab.savefig("./build/mcml-test-{}.png".format(ENV_NAME))
+pylab.savefig("./results/mcml-test-{}.png".format(ENV_NAME))
 pylab.show()
 
 # After training is done, we save the final weights.
-dqn.save_weights('./build/dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
+dqn.save_weights('./results/dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 
 # Finally, evaluate our algorithm for 5 episodes.
 # dqn.test(env, nb_episodes=5, visualize=True)
