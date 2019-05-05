@@ -1,0 +1,13 @@
+Keras	
+Keras-Applications	
+Keras-Preprocessing	
+future
+gym	
+h5py	
+matplotlib	
+numpy	
+pip	
+tensorboard	
+tensorflow	
+tensorflow-estimator	
+wheel	

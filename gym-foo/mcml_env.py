@@ -28,8 +28,7 @@ class MCML(gym.Env):
                                             shape=(2 * parameters.NB_DEVICES,), dtype=int)
         # MultiDiscrete samples all actions at one time and return random value for each action !
         self.action_space = spaces.MultiDiscrete(high_action) # A = {(d_1, e_1, ..., d_N, e_N)}
-        self.accumulated_data = 0
-
+        # self.accumulated_data = 0
         self.seed()
         self.reset()
 

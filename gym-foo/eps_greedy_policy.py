@@ -15,7 +15,7 @@ class MyEpsGreedy(Policy):
         self.step_counter = 0
         self.eps = self.eps_max
 
-        self.steps_per_episode = 200 # need to correct according to number of steps each episode
+        self.steps_per_episode = 300 # need to correct according to number of steps each episode
         # decay each episode
         self.eps_decay = (eps_max - eps_min) / (nb_steps / self.steps_per_episode)
 
