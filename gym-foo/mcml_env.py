@@ -3,12 +3,61 @@
 
 import gym
 import numpy as np
+import xlsxwriter
+from xlrd import open_workbook
+from xlutils.copy import copy
 from gym import spaces
 from gym.utils import seeding
 from parameters import Parameters
 
 # see parameters.py
+RESULT_PATH = 'results-2.xlsx'
+
 parameters = Parameters()
+workbook = xlsxwriter.Workbook(RESULT_PATH)
+worksheet = workbook.add_worksheet()
+# worksheet.set_column('A:A', 20)
+bold = workbook.add_format({'bold': True})
+worksheet.write('A1', 'Episode', bold)
+worksheet.write('B1', 'Episode_steps', bold)
+worksheet.write('C1', 'Total_reward', bold)
+worksheet.write('D1', 'Mean_reward', bold)
+worksheet.write('E1', 'Energy', bold)
+worksheet.write('F1', 'Latency', bold)
+worksheet.write('G1', 'Training_data', bold)
+
+def _to_excel(info, episode):
+    """
+    Write simulation results into excel file
+    :param info: input dictionary
+    :param episode: Current episode
+    :return: output file
+    """
+    """
+    logs = {
+                'episode':  self.episode_counter,
+                'episode_reward': self.episode_reward,
+                'energy': 100. * total_energy / parameters.ENERGY_THRESOLD, # propotion of energy required
+                'latency': latency_max,
+                'step_total': self.step_total,
+                'episode_steps': self.step_counter,
+                'reward_mean': self.episode_reward / self.step_counter
+               },
+    """
+
+    info = dict(*info)
+    worksheet.write(episode, 0, episode)
+    worksheet.write(episode, 1, info.get('episode_steps'))
+    worksheet.write(episode, 2, info.get('episode_reward'))
+    worksheet.write(episode, 3, info.get('reward_mean'))
+    worksheet.write(episode, 4, info.get('energy'))
+    worksheet.write(episode, 5, info.get('latency'))
+    worksheet.write(episode, 6, info.get('training_data'))
+
+    # print("step_total {}, episode {}, episode_steps {}, episode_reward {}, mean_reward {}, "
+    #       "energy {}, latency {}".
+    #     format(info.get('step_total'), episode, info.get('episode_steps'), info.get('episode_reward'),
+    #       info.get('reward_mean'), info.get('energy'), info.get('latency')))
 
 class MCML(gym.Env):
     """
@@ -28,7 +77,11 @@ class MCML(gym.Env):
                                             shape=(2 * parameters.NB_DEVICES,), dtype=int)
         # MultiDiscrete samples all actions at one time and return random value for each action !
         self.action_space = spaces.MultiDiscrete(high_action) # A = {(d_1, e_1, ..., d_N, e_N)}
-        # self.accumulated_data = 0
+        self.accumulated_data = 0
+        self.episode_counter = 0
+        self.episode_reward = 0
+        self.step_counter = 0
+        self.step_total = 0
         self.seed()
         self.reset()
 
@@ -37,6 +90,8 @@ class MCML(gym.Env):
         # print("debug: action.sample() {}".format(self.action_space.sample()))
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         state = self.state
+        self.step_counter += 1
+        self.step_total += 1
         # extract state information
         f_cpu = np.random.randint(0, parameters.CPUSHARE_MAX+1, size=3) # fn get an random action
         c_unit = state.reshape([2, parameters.NB_DEVICES])[1].copy() # copy cn from current state
@@ -80,6 +135,7 @@ class MCML(gym.Env):
 
         if self.accumulated_data > parameters.MAX_ACCUMULATED_DATA:
             done = True
+            self.episode_counter += 1
         else:
             done = False
 
@@ -91,6 +147,7 @@ class MCML(gym.Env):
         # add an reward_base to make sure reward > 0 -> encourage maximize positive long term value,
         # rather than negative
         reward += parameters.REWARD_BASE
+        self.episode_reward += reward
 
         if state_changed:
             next_state = np.array([f_cpu, c_unit_next]).flatten()
@@ -98,16 +155,30 @@ class MCML(gym.Env):
         else:
             self.state = state
 
-        info = {"reward": reward,
-                "total_data": total_data,
-                "total_energy": total_energy}
-        # self.state = self.observation_space.sample()
-        # print(action, e_unit, state, f_cpu, c_unit,c_unit_next, next_state) # [2 2 2 2 0 1]
-        return np.array(self.state), reward, done, info
+        logs = {
+                'episode':  self.episode_counter,
+                'episode_reward': self.episode_reward,
+                'energy': 100. * total_energy / parameters.ENERGY_THRESOLD, # propotion of energy required
+                'latency': latency_max,
+                'step_total': self.step_total,
+                'episode_steps': self.step_counter,
+                'reward_mean': self.episode_reward / self.step_counter,
+                'training_data': self.accumulated_data,
+               },
+        # export results to excel file
+        if done:
+            _to_excel(logs, self.episode_counter)
+
+        if self.step_total == parameters.NB_STEPS:
+            workbook.close()
+
+        return np.array(self.state), reward, done, {}
 
     def reset(self):
         self.state = self.nprandom.randint(low=0, high=parameters.CPUSHARE_MAX + 1, size=self.observation_space.shape) # not so sure
         self.accumulated_data = 0
+        self.episode_reward = 0
+        self.step_counter = 0
         return self.state
 
     def seed(self, seed=None):

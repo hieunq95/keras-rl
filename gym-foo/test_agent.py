@@ -15,15 +15,17 @@ from rl.memory import SequentialMemory
 from mcml_processor import MCMLProcessor
 from mcml_env import MCML
 from eps_greedy_policy import MyEpsGreedy
+from parameters import Parameters
 
 env = MCML()
-ENV_NAME = 'mcml-test-4'
+ENV_NAME = 'mcml-test-5'
+parameters = Parameters()
 
 np.random.seed(123)
 env.seed(123)
 nb_actions = 4 ** len(env.action_space.nvec)
 
-NB_STEPS = 1000000
+# NB_STEPS = 1000000
 # nb_actions = env.action_space # e.g 4**6 # sulution for action which is not a discrete ?
 # for i in env.action_space.nvec:
 #     nb_actions *= i
@@ -48,7 +50,7 @@ print(model.summary())
 memory = SequentialMemory(limit=50000, window_length=1)
 # policy = GreedyQPolicy()
 #
-policy = MyEpsGreedy(eps_max=0.9, eps_min=0, nb_steps=NB_STEPS)
+policy = MyEpsGreedy(eps_max=0.9, eps_min=0, nb_steps=parameters.NB_STEPS)
 
 processor = MCMLProcessor()
 
@@ -64,7 +66,7 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 # Ctrl + C.
 # print(dqn.metrics_names[:])
 
-learning_history = dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None)
+learning_history = dqn.fit(env, nb_steps=parameters.NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None)
 
 reward_history = learning_history.history.get('episode_reward')
 episode_history = np.arange(0, len(reward_history))
@@ -72,12 +74,12 @@ episode_history = np.arange(0, len(reward_history))
 # print(reward_history, episode_history)
 # plot score and save image
 pylab.plot(episode_history, reward_history, 'b')
-pylab.savefig("./results/mcml-test-{}.png".format(ENV_NAME))
+pylab.savefig("../results/mcml-test-{}.png".format(ENV_NAME))
 pylab.show()
 
 # After training is done, we save the final weights.
-dqn.save_weights('./results/dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
+dqn.save_weights('../results/dqn_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 
 # Finally, evaluate our algorithm for 5 episodes.
-# dqn.test(env, nb_episodes=5, visualize=True)
+# dqn.test(env, nb_episodes=5, visualize=False)
 

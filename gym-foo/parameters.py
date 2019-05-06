@@ -39,3 +39,5 @@ class Parameters():
         self.LATENCY_MAX = latency_constant * (D_n ** 1.5) * 1
         self.REWARD_BASE = reward_base
         self.LAMBDA = 1
+
+        self.NB_STEPS = 1000000
