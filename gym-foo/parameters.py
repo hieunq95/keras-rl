@@ -10,8 +10,6 @@ delta = 1 # δ(Joule): energy unit
 # Hieunq: newly defined variables
 F_cpu = 3 # maximum number of CPU shares
 C_capacity = 3 # capacity of energy storage
-# Dmax = N * D_n - 1 # offset = 1
-# Emax = N * E_n - 1
 Dmax = N * D_n
 Emax = N * E_n
 scale_factor = 2
@@ -40,4 +38,7 @@ class Parameters():
         self.REWARD_BASE = reward_base
         self.LAMBDA = 1
 
-        self.NB_STEPS = 1000000
+        self.NB_STEPS = 500000 # 1347 episode
+        self.EPISODES_TRAINING = 500
+
+        self.XLSX_PATH = 'results-6.xlsx'

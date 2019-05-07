@@ -4,60 +4,60 @@
 import gym
 import numpy as np
 import xlsxwriter
-from xlrd import open_workbook
 from xlutils.copy import copy
 from gym import spaces
 from gym.utils import seeding
 from parameters import Parameters
 
 # see parameters.py
-RESULT_PATH = 'results-2.xlsx'
-
 parameters = Parameters()
-workbook = xlsxwriter.Workbook(RESULT_PATH)
-worksheet = workbook.add_worksheet()
-# worksheet.set_column('A:A', 20)
-bold = workbook.add_format({'bold': True})
-worksheet.write('A1', 'Episode', bold)
-worksheet.write('B1', 'Episode_steps', bold)
-worksheet.write('C1', 'Total_reward', bold)
-worksheet.write('D1', 'Mean_reward', bold)
-worksheet.write('E1', 'Energy', bold)
-worksheet.write('F1', 'Latency', bold)
-worksheet.write('G1', 'Training_data', bold)
 
-def _to_excel(info, episode):
-    """
-    Write simulation results into excel file
-    :param info: input dictionary
-    :param episode: Current episode
-    :return: output file
-    """
-    """
-    logs = {
-                'episode':  self.episode_counter,
-                'episode_reward': self.episode_reward,
-                'energy': 100. * total_energy / parameters.ENERGY_THRESOLD, # propotion of energy required
-                'latency': latency_max,
-                'step_total': self.step_total,
-                'episode_steps': self.step_counter,
-                'reward_mean': self.episode_reward / self.step_counter
-               },
-    """
+# RESULT_PATH = parameters.XLSX_PATH
+# workbook = xlsxwriter.Workbook(RESULT_PATH)
+# worksheet = workbook.add_worksheet()
+# # worksheet.set_column('A:A', 20)
+# bold = workbook.add_format({'bold': True})
+# worksheet.write('A1', 'Episode', bold)
+# worksheet.write('B1', 'Episode_steps', bold)
+# worksheet.write('C1', 'Total_reward', bold)
+# worksheet.write('D1', 'Mean_reward', bold)
+# worksheet.write('E1', 'Energy', bold)
+# worksheet.write('F1', 'Latency', bold)
+# worksheet.write('G1', 'Training_data', bold)
 
-    info = dict(*info)
-    worksheet.write(episode, 0, episode)
-    worksheet.write(episode, 1, info.get('episode_steps'))
-    worksheet.write(episode, 2, info.get('episode_reward'))
-    worksheet.write(episode, 3, info.get('reward_mean'))
-    worksheet.write(episode, 4, info.get('energy'))
-    worksheet.write(episode, 5, info.get('latency'))
-    worksheet.write(episode, 6, info.get('training_data'))
-
-    # print("step_total {}, episode {}, episode_steps {}, episode_reward {}, mean_reward {}, "
-    #       "energy {}, latency {}".
-    #     format(info.get('step_total'), episode, info.get('episode_steps'), info.get('episode_reward'),
-    #       info.get('reward_mean'), info.get('energy'), info.get('latency')))
+# def _to_excel(info, episode):
+#     """
+#     Write simulation results into excel file
+#     :param info: input dictionary
+#     :param episode: Current episode
+#     :return: output file
+#     """
+#     """
+#     logs = {
+#                 'episode':  self.episode_counter,
+#                 'episode_reward': self.episode_reward,
+#                 'energy': 100. * total_energy / parameters.ENERGY_THRESOLD, # propotion of energy required
+#                 'latency': latency_max,
+#                 'step_total': self.step_total,
+#                 'episode_steps': self.step_counter,
+#                 'reward_mean': self.episode_reward / self.step_counter
+#                },
+#     """
+#
+#     info = dict(*info)
+#     worksheet.write(episode, 0, episode)
+#     worksheet.write(episode, 1, info.get('episode_steps'))
+#     worksheet.write(episode, 2, info.get('episode_reward'))
+#     worksheet.write(episode, 3, info.get('reward_mean'))
+#     worksheet.write(episode, 4, info.get('energy'))
+#     worksheet.write(episode, 5, info.get('latency'))
+#     worksheet.write(episode, 6, info.get('training_data'))
+#
+#     print("--------------------------------------")
+#     print("step_total {}, episode {}, episode_steps {}, episode_reward {}, mean_reward {}, "
+#           "energy {}, latency {}".
+#         format(info.get('step_total'), episode, info.get('episode_steps'), info.get('episode_reward'),
+#           info.get('reward_mean'), info.get('energy'), info.get('latency')))
 
 class MCML(gym.Env):
     """
@@ -67,7 +67,8 @@ class MCML(gym.Env):
     - Action space: A = {(d , e);d ≤ Dn , e ≤ cn , f ̄≤ μf, n = (1, . . . , N )}
     - Transition: c' = c - e + A
     """
-    def __init__(self):
+    def __init__(self, writer):
+        self.writer = writer
 
         high_action = np.array([parameters.DATA_MAX+1, parameters.ENERGY_MAX+1])
         high_action = np.repeat(high_action, parameters.NB_DEVICES)
@@ -82,6 +83,9 @@ class MCML(gym.Env):
         self.episode_reward = 0
         self.step_counter = 0
         self.step_total = 0
+        self.energy_per_episode = 0.0
+        self.latency_per_episode = 0.0
+        self.DONE_FLAG = False
         self.seed()
         self.reset()
 
@@ -133,14 +137,19 @@ class MCML(gym.Env):
             else:
                 latency = latency
 
-        if self.accumulated_data > parameters.MAX_ACCUMULATED_DATA:
+        latency_max = np.amax(latency)
+        self.energy_per_episode += latency_max
+        self.latency_per_episode += total_energy
+
+        if self.accumulated_data >= parameters.MAX_ACCUMULATED_DATA:
             done = True
             self.episode_counter += 1
+            self.energy_per_episode /= self.step_counter
+            self.latency_per_episode /= self.step_counter
         else:
             done = False
 
         done = bool(done)
-        latency_max = np.amax(latency)
 
         reward += 10 * (parameters.SCALE_FACTOR * total_data / parameters.DATA_THRESLOD \
                   - total_energy / parameters.ENERGY_THRESOLD - latency_max / parameters.LATENCY_MAX)
@@ -155,23 +164,22 @@ class MCML(gym.Env):
         else:
             self.state = state
 
-        logs = {
-                'episode':  self.episode_counter,
-                'episode_reward': self.episode_reward,
-                'energy': 100. * total_energy / parameters.ENERGY_THRESOLD, # propotion of energy required
-                'latency': latency_max,
-                'step_total': self.step_total,
-                'episode_steps': self.step_counter,
-                'reward_mean': self.episode_reward / self.step_counter,
-                'training_data': self.accumulated_data,
-               },
-        # export results to excel file
         if done:
-            _to_excel(logs, self.episode_counter)
+            logs = {
+                       'episode': self.episode_counter,
+                       'episode_reward': self.episode_reward,
+                       'energy': 100.0 * self.energy_per_episode,
+                       'latency': 100.0 * self.latency_per_episode,
+                       'step_total': self.step_total,
+                       'episode_steps': self.step_counter,
+                       'reward_mean': self.episode_reward / self.step_counter,
+                       'training_data': self.accumulated_data,
+                   },
+            # export results to excel file
+            # _to_excel(logs, self.episode_counter)
+            self.writer.general_write(logs, self.episode_counter)
 
-        if self.step_total == parameters.NB_STEPS:
-            workbook.close()
-
+        self.DONE_FLAG = done
         return np.array(self.state), reward, done, {}
 
     def reset(self):
@@ -179,10 +187,21 @@ class MCML(gym.Env):
         self.accumulated_data = 0
         self.episode_reward = 0
         self.step_counter = 0
+        self.energy_per_episode = 0.0
+        self.latency_per_episode = 0.0
+        self.DONE_FLAG = False
         return self.state
 
     def seed(self, seed=None):
         self.nprandom, seed = seeding.np_random(seed)
         return [seed]
+
+    def get_env_config(self):
+        """
+        Get variables from current environment
+
+        :return: Config info
+        """
+        return self.DONE_FLAG
 
 
