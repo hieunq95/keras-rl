@@ -4,22 +4,6 @@ from parameters import Parameters
 
 parameters = Parameters()
 
-def base10toN(num, base):
-    """Change ``num'' to given base
-    Upto base 36 is supported."""
-
-    converted_string, modstring = "", ""
-    currentnum = num
-    if not 1 < base < 37:
-        raise ValueError("base must be between 2 and 36")
-    if not num:
-        return '0'
-    while currentnum:
-        mod = currentnum % base
-        currentnum = currentnum // base
-        converted_string = chr(48 + mod + 7*(mod > 10)) + converted_string
-    return converted_string
-
 def _convert_action(action):
     """
     Convert action from decima to array (dn, cn)
@@ -47,9 +31,6 @@ def _convert_action(action):
             energy_array.append(energy_i)
 
     processed_action = np.array([data_array, energy_array]).flatten()
-    # test
-    to_base_4_test = base10toN(action, 4)
-    # print("action {}, processed_action {}, to_base_4 {}".format(action, processed_action, to_base_4_test))
 
     return processed_action
 

@@ -12,53 +12,6 @@ from parameters import Parameters
 # see parameters.py
 parameters = Parameters()
 
-# RESULT_PATH = parameters.XLSX_PATH
-# workbook = xlsxwriter.Workbook(RESULT_PATH)
-# worksheet = workbook.add_worksheet()
-# # worksheet.set_column('A:A', 20)
-# bold = workbook.add_format({'bold': True})
-# worksheet.write('A1', 'Episode', bold)
-# worksheet.write('B1', 'Episode_steps', bold)
-# worksheet.write('C1', 'Total_reward', bold)
-# worksheet.write('D1', 'Mean_reward', bold)
-# worksheet.write('E1', 'Energy', bold)
-# worksheet.write('F1', 'Latency', bold)
-# worksheet.write('G1', 'Training_data', bold)
-
-# def _to_excel(info, episode):
-#     """
-#     Write simulation results into excel file
-#     :param info: input dictionary
-#     :param episode: Current episode
-#     :return: output file
-#     """
-#     """
-#     logs = {
-#                 'episode':  self.episode_counter,
-#                 'episode_reward': self.episode_reward,
-#                 'energy': 100. * total_energy / parameters.ENERGY_THRESOLD, # propotion of energy required
-#                 'latency': latency_max,
-#                 'step_total': self.step_total,
-#                 'episode_steps': self.step_counter,
-#                 'reward_mean': self.episode_reward / self.step_counter
-#                },
-#     """
-#
-#     info = dict(*info)
-#     worksheet.write(episode, 0, episode)
-#     worksheet.write(episode, 1, info.get('episode_steps'))
-#     worksheet.write(episode, 2, info.get('episode_reward'))
-#     worksheet.write(episode, 3, info.get('reward_mean'))
-#     worksheet.write(episode, 4, info.get('energy'))
-#     worksheet.write(episode, 5, info.get('latency'))
-#     worksheet.write(episode, 6, info.get('training_data'))
-#
-#     print("--------------------------------------")
-#     print("step_total {}, episode {}, episode_steps {}, episode_reward {}, mean_reward {}, "
-#           "energy {}, latency {}".
-#         format(info.get('step_total'), episode, info.get('episode_steps'), info.get('episode_reward'),
-#           info.get('reward_mean'), info.get('energy'), info.get('latency')))
-
 class MCML(gym.Env):
     """
     Mobile cloud machine learning environment
@@ -105,7 +58,6 @@ class MCML(gym.Env):
         e_unit = np.asarray(action).reshape([2, parameters.NB_DEVICES])[1].copy() # copy last 3 elements
 
         #state transition
-        # TODO: add An
         A_n = np.random.poisson(parameters.LAMBDA, size=parameters.NB_DEVICES)
         c_unit_next = np.subtract(c_unit, e_unit)
         c_unit_next = np.asarray([c_unit_next[i] + A_n[i] for i in range(len(c_unit_next))])
@@ -176,7 +128,6 @@ class MCML(gym.Env):
                        'training_data': self.accumulated_data,
                    },
             # export results to excel file
-            # _to_excel(logs, self.episode_counter)
             self.writer.general_write(logs, self.episode_counter)
 
         self.DONE_FLAG = done
