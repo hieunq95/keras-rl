@@ -118,15 +118,16 @@ class MCML(gym.Env):
 
         if done:
             logs = {
-                       'episode': self.episode_counter,
-                       'episode_reward': self.episode_reward,
-                       'energy': 100.0 * self.energy_per_episode,
-                       'latency': 100.0 * self.latency_per_episode,
-                       'step_total': self.step_total,
-                       'episode_steps': self.step_counter,
-                       'reward_mean': self.episode_reward / self.step_counter,
-                       'training_data': self.accumulated_data,
-                   },
+               'episode': self.episode_counter,
+               'episode_reward': self.episode_reward,
+               'energy': 100.0 * self.energy_per_episode,
+               'latency': 100.0 * self.latency_per_episode,
+               'step_total': self.step_total,
+               'episode_steps': self.step_counter,
+               'reward_mean': self.episode_reward / self.step_counter,
+               'training_data': self.accumulated_data,
+                'training_data_mean': self.accumulated_data / self.step_counter,
+               },
             # export results to excel file
             self.writer.general_write(logs, self.episode_counter)
 

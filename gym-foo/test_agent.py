@@ -15,7 +15,7 @@ from rl.memory import SequentialMemory
 
 from mcml_processor import MCMLProcessor
 from mcml_env import MCML
-from eps_greedy_policy import MyEpsGreedy
+from my_policy import MyEpsGreedy, RandomPolicy, GreedyPolicy
 from parameters import Parameters
 from results_writer import MCMLWriter
 
@@ -24,8 +24,12 @@ parameters = Parameters()
 workbook = xlsxwriter.Workbook(parameters.XLSX_PATH)
 writer = MCMLWriter(workbook)
 env = MCML(writer)
-policy = MyEpsGreedy(environment=env, eps_max=0.9, eps_min=0,
-                     eps_training=parameters.EPISODES_TRAINING, writer=writer)
+
+# policy = MyEpsGreedy(environment=env, eps_max=0.9, eps_min=0,
+#                      eps_training=parameters.EPISODES_TRAINING, writer=writer)
+# policy = RandomPolicy(env, writer)
+policy = GreedyPolicy(env, writer)
+
 processor = MCMLProcessor()
 nb_actions = 4 ** len(env.action_space.nvec)
 

@@ -51,6 +51,51 @@ class MyEpsGreedy(Policy):
 
         return action
 
+class RandomPolicy(Policy):
+    """
+    Random policy in which agent takes a random action in each step
+    """
+    def __init__(self, environment, writer):
+        super(RandomPolicy, self).__init__()
+        self.environment = environment
+        self.writer = writer
+
+    def select_action(self, q_values):
+        """
+        Seclect an random action from the environment
+
+        :param #
+
+        :return: A random action
+        """
+        assert q_values.ndim == 1
+        nb_actions = q_values.shape[0]
+        action = np.random.randint(0, nb_actions)
+
+        return action
+
+class GreedyPolicy(Policy):
+    """Implement the greedy policy
+
+    Greedy policy returns the current best action according to q_values
+    """
+    def __init__(self, environment, writer):
+        super(GreedyPolicy, self).__init__()
+        self.environment = environment
+        self.writer = writer
+
+    def select_action(self, q_values):
+        """Return the selected action
+
+        # Arguments
+            q_values (np.ndarray): List of the estimations of Q for each action
+
+        # Returns
+            Selection action
+        """
+        assert q_values.ndim == 1
+        action = np.argmax(q_values)
+        return action
 
 
 

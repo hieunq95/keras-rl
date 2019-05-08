@@ -39,6 +39,6 @@ class Parameters():
         self.LAMBDA = 1
 
         self.NB_STEPS = 500000 # 1347 episode
-        self.EPISODES_TRAINING = 500
+        self.EPISODES_TRAINING = 200
 
-        self.XLSX_PATH = 'results-6.xlsx'
+        self.XLSX_PATH = 'results-10.xlsx'

@@ -14,6 +14,7 @@ class MCMLWriter():
         self.worksheet1.write('E1', 'Energy', bold)
         self.worksheet1.write('F1', 'Latency', bold)
         self.worksheet1.write('G1', 'Training_data', bold)
+        self.worksheet1.write('H1', 'Training_data_mean', bold)
 
         self.worksheet2 = workbook.add_worksheet()
         self.worksheet2.write('A1', 'Episode', bold)
@@ -37,6 +38,7 @@ class MCMLWriter():
         self.worksheet1.write(episode, 4, info.get('energy'))
         self.worksheet1.write(episode, 5, info.get('latency'))
         self.worksheet1.write(episode, 6, info.get('training_data'))
+        self.worksheet1.write(episode, 7, info.get('training_data_mean'))
 
     def epsilon_write(self, logs, episode):
         """
