@@ -50,7 +50,7 @@ class MCML(gym.Env):
         self.step_counter += 1
         self.step_total += 1
         # extract state information
-        f_cpu = np.random.randint(0, parameters.CPUSHARE_MAX+1, size=3) # fn get an random action
+        f_cpu = np.random.randint(0, parameters.CPUSHARE_MAX+1, size=parameters.NB_DEVICES) # fn get an random action
         c_unit = state.reshape([2, parameters.NB_DEVICES])[1].copy() # copy cn from current state
 
         # extract action information, add fn penalty later
