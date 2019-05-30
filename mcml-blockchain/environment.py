@@ -5,7 +5,7 @@ import numpy as np
 import gym
 from gym import spaces
 from gym.utils import seeding
-from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX
+from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX
 
 def calculate_latency():
     ...
@@ -27,10 +27,16 @@ def get_reward():
 
 class Environment(gym.Env):
     def __init__(self):
-        action_array = np.array([DATA_MAX, ENERGY_MAX])
+        action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX])
         action_array = np.repeat(action_array, NB_DEVICES)
 
-        self.observation_space = spaces.Box(low=0, high=CPU_SHARES, shape=(2 * NB_DEVICES,), dtype=int)
+        state_lower_bound = np.array([0, 0, 0]).repeat(NB_DEVICES)
+        state_upper_bound = np.array([CPU_SHARES, CAPACITY_MAX, MEMPOOL_MAX]).repeat(NB_DEVICES)
+        """
+        state_space : {f1,f2,...,F, c1, c2, ..., C, m1, m2, ..., M}
+        action_space: {d1, d2, ..., D, e1, e2, ..., E, r1, r2, ..., R}
+        """
+        self.observation_space = spaces.Box(low=state_lower_bound, high=state_upper_bound, dtype=int)
         self.action_space = spaces.MultiDiscrete(action_array)
 
     def step(self, action):
@@ -44,7 +50,12 @@ class Environment(gym.Env):
         return np.array(self.state), reward, done, {}
 
     def reset(self):
-        self.state = self.nprandom.randint(low=0, high=CPU_SHARES, size=self.observation_space.shape)
+        cpu_shares_init = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
+        capacity_init = self.nprandom.randint(CAPACITY_MAX, size=NB_DEVICES)
+        mempool_init = self.nprandom.randint(MEMPOOL_MAX, size=NB_DEVICES)
+        state = np.array([cpu_shares_init, capacity_init, mempool_init]).flatten()
+        self.state = state
+        
         return self.state
 
     def seed(self, seed=None):
