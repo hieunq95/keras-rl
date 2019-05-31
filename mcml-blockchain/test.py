@@ -48,7 +48,7 @@ plt.plot(np.arange(1, n_max), prob_n[0][1:], '-bo', label ='0.25')
 plt.plot(np.arange(1, n_max), prob_n[1][1:], '-r*', label ='0.5')
 plt.plot(np.arange(1, n_max), prob_n[2][1:], '-g^', label ='0.95')
 plt.legend()
-plt.show()
+# plt.show()
 
 # Factorial test
 # result = np.array([f(t) for t in range(1,m+1)]).sum()
@@ -58,3 +58,20 @@ plt.show()
 #     results.append(value)
 # print(results)
 # print(math.factorial(0))
+
+# Array test
+arr = np.arange(9)
+print(arr)
+print(arr[3:6])
+
+energy = np.random.randint(low=1, high=4, size=3)
+data = np.random.randint(low=1, high=4, size=3)
+cpu_cycles = np.zeros(3)
+cpu_shares = np.random.randint(low=0, high=4, size=3)
+print(cpu_shares)
+for i in range(len(energy)):
+    cpu_cycles[i] =  np.sqrt(1 * energy[i]) / np.sqrt((10 ** -18) * data[i])
+    if cpu_cycles[i] > 0.6 * 10 ** 9 * cpu_shares[i]:
+        cpu_cycles[i] = 0.6 * 10 ** 9 * cpu_shares[i]
+
+print(cpu_cycles)
