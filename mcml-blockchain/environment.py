@@ -29,6 +29,8 @@ class Environment(gym.Env):
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
 
+        self.seed(10000)
+        self.reset()
         self.step_counter = 0
 
     def state_transition(self, state, action):
@@ -64,23 +66,28 @@ class Environment(gym.Env):
         return next_state
 
     def calculate_latency(self, action):
+        # print('calculate_latency: action {}'.format(action))
         data = action[self.DATA_OFFSET:self.ENERGY_OFFSET]
         energy = action[self.ENERGY_OFFSET:self.FEERATE_OFFSET]
 
         cpu_cycles = self._calculate_cpu_cycles(energy, data)
-        latency_array = np.array([10 ** 10 * data[k] / cpu_cycles[k] for k in range(len(cpu_cycles))])
+        latency_array = np.zeros(len(cpu_cycles))
+        for k in range(len(cpu_cycles)):
+            if cpu_cycles[k] != 0:
+                latency_array[k] = 10 ** 10 * data[k] / cpu_cycles[k]
+
         latency = max(latency_array)
 
         return latency
 
-    def _get_reward(self, action):
+    def get_reward(self, action):
         tau = 10 ** (-28)
         nu = 10 ** 10
         delta = 1
         alpha_D = 3
         alpha_L = 1
         alpha_E = 1
-        REWARD_BASE = 0
+        REWARD_BASE = 2
 
 
         data = action[self.DATA_OFFSET:self.ENERGY_OFFSET]
@@ -94,12 +101,17 @@ class Environment(gym.Env):
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
 
-        reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_L * latency / LATENCY_THRESOLD \
-                 - alpha_E * total_energy / ENERGY_THRESOLD
+        reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD\
+                 - alpha_L * latency / LATENCY_THRESOLD
         reward *= 10
         reward += REWARD_BASE
 
         return reward
+
+    def _correct_action(self, cpu_cycles, cpu_shares, energy):
+        for i in range(len(cpu_shares)):
+            if cpu_cycles[i] > 0.6 * 10 ** 9 * cpu_shares[i]:
+                energy[i] = ENERGY_MAX + 1
 
     def _calculate_cpu_cycles(self, energy, data):
         cpu_cycles = np.zeros(len(energy))
@@ -109,18 +121,51 @@ class Environment(gym.Env):
 
         return cpu_cycles
 
+    def check_action(self, action):
+        """
+        Check action constrain and correct action as follows:
 
+        - if energy required > current capacity, then let energy required = current capacity
+
+        - if energy or data = 0, then both should be 0
+
+        - if cpu_cycle_required > u * cpu_shares, then let energy_action = MAX_ACTION + 1 to notice agent should not  make any state transition for this device
+
+        :param data_array:
+        :param energy_array:
+        :return: corrected action
+        """
+        state = self.state
+
+        cpushares_array = state[self.DATA_OFFSET:self.ENERGY_OFFSET]
+        capacity_array = state[self.ENERGY_OFFSET:self.FEERATE_OFFSET]
+        data_array = action[self.DATA_OFFSET:self.ENERGY_OFFSET]
+        energy_array = action[self.ENERGY_OFFSET:self.FEERATE_OFFSET]
+        feerate_array = action[self.FEERATE_OFFSET:]
+
+        for i in range(len(energy_array)):
+            if(data_array[i] == 0 or energy_array[i] == 0):
+                energy_array[i] = 0
+                data_array[i] = 0
+
+            if(energy_array[i] > capacity_array[i]):
+                energy_array[i] = capacity_array[i]
+
+        cpu_cyles_array = self._calculate_cpu_cycles(energy_array, data_array)
+        self._correct_action(cpu_cyles_array, cpushares_array, energy_array)
+
+        return np.array([data_array, energy_array, feerate_array]).flatten()
 
     def step(self, action):
-        print(action)
-        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
+        # assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
+        action = self.check_action(action)
         self.step_counter += 1
         # TODO : termination as block generation time follows exponential distribution with mean = 600
-        TERMINATION = 600
+        TERMINATION = self.TERMINATION
 
         state = self.state
 
-        reward = self._get_reward(action)
+        reward = self.get_reward(action)
         # State transition, action is taken from Processor.process_action()
         next_state = self.state_transition(state, action)
 
@@ -140,15 +185,12 @@ class Environment(gym.Env):
         self.state = state
 
         self.step_counter = 0
-        
+        self.TERMINATION = np.int(np.random.exponential(200))
         return self.state
 
     def seed(self, seed=None):
         self.nprandom, seed = seeding.np_random(seed)
         return [seed]
-
-class MyPolicy():
-    ...
 
 class MyProcessor(Processor):
 
@@ -164,57 +206,6 @@ class MyProcessor(Processor):
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
 
-        # self._calculate_cpu_cycles(energy, data)
-        # self._correct_action(cpu_cycles, cpu_shares, energy)
-        # self._check_action(data_array, energy_array)
-
-    def _correct_action(self, cpu_cycles, cpu_shares, energy):
-        for i in range(len(cpu_shares)):
-            if cpu_cycles[i] > 0.6 * 10 ** 9 * cpu_shares[i]:
-                energy[i] = ENERGY_MAX + 1
-
-    def calculate_cpu_cycles(self, energy, data):
-        cpu_cycles = np.zeros(len(energy))
-        for i in range(len(data)):
-            if (data[i] != 0):
-                cpu_cycles[i] = np.sqrt(1 * energy[i]) / np.sqrt((10 ** -18) * data[i])
-
-        return cpu_cycles
-
-    def _check_action(self, action):
-        """
-        Check action constrain and correct action as follows:
-
-        - if energy required > current capacity, then let energy required = current capacity
-
-        - if energy or data = 0, then both should be 0
-
-        - if cpu_cycle_required > u * cpu_shares, then let energy_action = MAX_ACTION + 1 to notice agent should not  make any state transition for this device
-
-        :param data_array:
-        :param energy_array:
-        :return: corrected action
-        """
-        state = self.process_observation()
-
-        cpushares_array = state[self.DATA_OFFSET:self.ENERGY_OFFSET]
-        capacity_array = state[self.ENERGY_OFFSET:self.FEERATE_OFFSET]
-        data_array = action[self.DATA_OFFSET:self.ENERGY_OFFSET]
-        energy_array = action[self.ENERGY_OFFSET:self.FEERATE_OFFSET]
-        feerate_array = action[self.FEERATE_OFFSET:]
-
-        for i in range(len(energy_array)):
-            if(data_array[i] == 0 or energy_array[i] == 0):
-                energy_array[i] = 0
-                data_array[i] = 0
-
-            if(energy_array[i] > capacity_array[i]):
-                energy_array[i] = capacity_array[i]
-
-        cpu_cyles_array = self.calculate_cpu_cycles(energy_array, data_array)
-        self._correct_action(cpu_cyles_array, cpushares_array, energy_array)
-
-        return np.array([data_array, energy_array, feerate_array]).flatten()
 
     def _convert_action(self, action):
         """
@@ -254,9 +245,6 @@ class MyProcessor(Processor):
 
     def process_action(self, action):
         processed_action = self._convert_action(action)
-        # TODO : fill action according to energy and data
-        processed_action = self._check_action(processed_action)
-
         return processed_action
 
     def metrics_names(self):
@@ -264,4 +252,5 @@ class MyProcessor(Processor):
 
     def process_observation(self, observation):
         return observation
+
 
