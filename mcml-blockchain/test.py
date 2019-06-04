@@ -4,26 +4,26 @@ import math
 
 sample_line = 1
 T = 5000
-decay = 100
-x = 0
-c = [0.95, 0.95]
+decay = 40
+
+c = [0.5, 0.95]
 X = np.zeros((sample_line,T), dtype=int)
 print(np.random.poisson(0.95, 100))
 
 for i in range(sample_line):
-    x = 0
+    x = 1
     for t in range(1, T):
-        if t % np.random.poisson(100) != 0:
+        if t % np.random.poisson(decay) != 0:
             x = x + np.random.poisson(c[i])
             X[i][t] = x
         else:
             x= max(0, x - np.random.poisson(decay))
             X[i][t] = x
 
-# plt.plot(np.arange(T), X[0][:], 'b')
-# # plt.plot(np.arange(T), X[1][:], 'r')
-# # plt.plot(np.arange(T), X[2][:], 'g')
-# plt.show()
+plt.plot(np.arange(T), X[0][:], 'b')
+# plt.plot(np.arange(T), X[1][:], 'r')
+# plt.plot(np.arange(T), X[2][:], 'g')
+plt.show()
 
 # Probability mass function of confirmation time (in blocks)
 fee_rate = [0.25, 0.5, 0.95]
@@ -77,9 +77,9 @@ print(prob_n[0], prob_n[1], prob_n[2])
 # print(cpu_cycles)
 
 # Exponential distribution
-print(np.random.exponential(10, 100))
-exp_dis = np.random.exponential(10, 100)
-int_array = [np.int(k) for k in exp_dis]
-print(int_array)
-plt.plot(np.arange(0, 200), np.random.exponential(10, 200))
-plt.show()
+# print(np.random.exponential(10, 100))
+# exp_dis = np.random.exponential(10, 100)
+# int_array = [np.int(k) for k in exp_dis]
+# print(int_array)
+# plt.plot(np.arange(0, 200), np.random.exponential(10, 200))
+# plt.show()

@@ -54,15 +54,15 @@ class Environment(gym.Env):
         energy_array = action[SECOND_OFFSET:THIRD_OFFSET]
         charging_array = np.random.poisson(1, size=len(energy_array))
 
-        next_capacity_array = np.zeros(3 * NB_DEVICES)
+        next_capacity_array = np.zeros(NB_DEVICES)
 
         for i in range(len(capacity_array)):
             if energy_array[i] > ENERGY_MAX:
                 next_capacity_array[i] = capacity_array[i]
             else:
-                next_capacity_array[i] = capacity_array[i] - energy_array[i] + charging_array[i]
+                next_capacity_array[i] = min(capacity_array[i] - energy_array[i] + charging_array[i], CAPACITY_MAX)
 
-        next_state = np.array([cpu_shares_array, capacity_array, mempool_array]).flatten()
+        next_state = np.array([cpu_shares_array, next_capacity_array, mempool_array], dtype=int).flatten()
         return next_state
 
     def calculate_latency(self, action):
@@ -116,7 +116,7 @@ class Environment(gym.Env):
     def _calculate_cpu_cycles(self, energy, data):
         cpu_cycles = np.zeros(len(energy))
         for i in range(len(data)):
-            if (data[i] != 0):
+            if data[i] != 0:
                 cpu_cycles[i] = np.sqrt(1 * energy[i]) / np.sqrt((10 ** -18) * data[i])
 
         return cpu_cycles

@@ -13,11 +13,13 @@ for i in range(10):
     # print(state_init)
 
 rewards = []
+state = env.reset()
 for t in range(2000):
     #test random action
-
-    state, reward , done, info = env.step(env.action_space.sample())
+    print(state)
+    next_state, reward , done, info = env.step(state)
     rewards.append(reward)
+    state = next_state
     print(state, reward, done, info)
 
 plt.plot(np.arange(0,2000), rewards)
