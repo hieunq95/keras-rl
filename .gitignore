@@ -77,3 +77,6 @@ target/
 # env
 gym-foo/gym_foo/*.png
 gym-foo/gym_foo/*.h5f
+
+# Mcml - blockchain
+mcml-blockchain/build/

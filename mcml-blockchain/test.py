@@ -14,16 +14,17 @@ for i in range(sample_line):
     x = 1
     for t in range(1, T):
         if t % np.random.poisson(decay) != 0:
-            x = x + np.random.poisson(c[i])
+            # x = x + np.random.poisson(c[i])
+            x = x + np.random.exponential(c[i])
             X[i][t] = x
         else:
             x= max(0, x - np.random.poisson(decay))
             X[i][t] = x
 
-plt.plot(np.arange(T), X[0][:], 'b')
+# plt.plot(np.arange(T), X[0][:], 'b')
 # plt.plot(np.arange(T), X[1][:], 'r')
 # plt.plot(np.arange(T), X[2][:], 'g')
-plt.show()
+# plt.show()
 
 # Probability mass function of confirmation time (in blocks)
 fee_rate = [0.25, 0.5, 0.95]
@@ -43,7 +44,7 @@ for i in range(len(fee_rate)):
 
     # for j in range(n_max):
     #     prob_n[i][j] = 1 - sum(prob_n[i][:j])
-print(prob_n[0], prob_n[1], prob_n[2])
+# print(prob_n[0], prob_n[1], prob_n[2])
 # plt.plot(np.arange(1, n_max), prob_n[0][1:], '-bo', label ='0.25')
 # plt.plot(np.arange(1, n_max), prob_n[1][1:], '-r*', label ='0.5')
 # plt.plot(np.arange(1, n_max), prob_n[2][1:], '-g^', label ='0.95')
@@ -83,3 +84,36 @@ print(prob_n[0], prob_n[1], prob_n[2])
 # print(int_array)
 # plt.plot(np.arange(0, 200), np.random.exponential(10, 200))
 # plt.show()
+
+# Calculate probability of confirmation time
+def get_prob(x, n, c):
+    y = np.max([(n - x) / c, 0]) #max((n - x) / c, 0)
+    sigma = np.array([y ** k * np.exp(-y) / math.factorial(k) for k in range(n)]).sum()
+    prob = 1 - sigma
+    return prob
+
+# Find delta_n = n - x0
+x0 = 2
+c0 = 0.25
+probs = []
+delta_n = []
+for n in range(x0, 10):
+    prob = get_prob(x0, n, c0)
+    probs.append(prob)
+    delta_n.append(np.max([n - x0, 0]))
+print(probs)
+print(np.max([5, 6]))
+plt.plot(delta_n, probs, '-b*')
+plt.show()
+
+# # Find optima c
+# x0 = 2
+# n_min = x0 + 2
+# probs = []
+#
+# for c in range(3):
+#     c_fee = 0.25 * (c + 1)
+#     prob = get_prob(x0, n_min, c_fee)
+#     probs.append(prob)
+#
+# print(probs)
