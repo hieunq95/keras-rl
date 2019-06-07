@@ -2,6 +2,7 @@
 # @author: Hieunq
 
 import numpy as np
+import math
 import gym
 from gym import spaces
 from gym.utils import seeding
@@ -34,6 +35,11 @@ class Environment(gym.Env):
 
         self.mempool_state = MEMPOOL_INIT
         self.mempools = mempool
+        self.DONE_FLAG = False
+        self.env_info = {
+            'Pr' : [],
+            'Mempool' : []
+        }
 
         self.seed(10000)
         self.reset()
@@ -78,7 +84,7 @@ class Environment(gym.Env):
         next_mempool_array = next_mempool_array.repeat(NB_DEVICES)
         next_state = np.array([cpu_shares_array, next_capacity_array, next_mempool_array], dtype=np.float32).flatten()
         # Get first seven elements
-        next_state = next_state[THIRD_OFFSET+1]
+        next_state = next_state[:THIRD_OFFSET+1]
 
         return next_state
 
@@ -97,6 +103,25 @@ class Environment(gym.Env):
 
         return latency
 
+    def _get_confirm_prob(self, x, n, r):
+        """
+        Calculate the probability of a transaction with fee rate r are confirmed in at least n blocks
+        :param x: mempool state with dtype = int
+
+        :param n: number of blocks that users should wait for confirmation
+
+        :param r: Fee rate of the transaction
+
+        :return: Probability of confirmation within n blocks, should be greater than 95%
+        """
+        # Calculate the slope of mempool as a function of r, i.e. arrival rate
+        # c(r) = 1 - 0.25 * (r + 1)
+        c = 1 - 0.25 * (r + 1)
+        y = np.max([(n - x) / c, 0])  # max((n - x) / c, 0)
+        sigma = np.array([y ** k * np.exp(-y) / math.factorial(k) for k in range(n)]).sum()
+        prob = 1 - sigma
+        return prob
+
     def get_reward(self, action):
         tau = 10 ** (-28)
         nu = 10 ** 10
@@ -105,10 +130,11 @@ class Environment(gym.Env):
         alpha_L = 1
         alpha_E = 1
         REWARD_BASE = 2
-
+        REWARD_PENATY = 0
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        feerate = np.copy(action[self.FEERATE_OFFSET:])
 
         ENERGY_THRESOLD = ENERGY_MAX * NB_DEVICES
         DATA_THRESOLD = DATA_MAX * NB_DEVICES
@@ -122,6 +148,16 @@ class Environment(gym.Env):
                  - alpha_L * latency / LATENCY_THRESOLD
         reward *= 10
         reward += REWARD_BASE
+
+        current_block = self.state[-1]
+        current_block = np.int(current_block)
+        feerate_min = np.min(feerate)
+        fastest_confirm_prob = self._get_confirm_prob(current_block, current_block + 1, feerate_min)
+
+        if fastest_confirm_prob < 0.95:
+            reward -= REWARD_PENATY
+        # else:
+            # print(fastest_confirm_prob)
 
         return reward
 
@@ -202,6 +238,7 @@ class Environment(gym.Env):
         else:
             done = False
 
+        self.DONE_FLAG = done
         self.state = next_state
         return np.array(self.state), reward, done, {}
 
@@ -219,12 +256,35 @@ class Environment(gym.Env):
 
         self.step_counter = 0
         self.TERMINATION = np.int(np.random.poisson(200))
-
+        self.DONE_FLAG = False
         return self.state
 
     def seed(self, seed=None):
         self.nprandom, seed = seeding.np_random(seed)
         return [seed]
+
+    def is_terminated(self):
+        """
+        Get variables from current environment
+
+        :return: Config info
+        """
+        return self.DONE_FLAG
+
+    def set_env_info(self, p, m):
+        """
+        Set values for dictionary including envoriment's information
+        :param p: probability of adding block
+
+        :param m: mempool state
+
+        :return:
+        """
+        self.env_info.get('Pr').append(p)
+        self.env_info.get('Mempool').append(m)
+
+    def get_env_info(self):
+        return self.env_info
 
 class MyProcessor(Processor):
 

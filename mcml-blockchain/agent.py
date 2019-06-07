@@ -13,12 +13,13 @@ from rl.policy import GreedyQPolicy, EpsGreedyQPolicy
 from rl.memory import SequentialMemory
 
 from environment import Environment, MyProcessor
+from policy_epgreedy import MyEpsGreedy
 
 mempool = []
 env = Environment(mempool)
 
 processor = MyProcessor()
-policy = GreedyQPolicy()
+policy = MyEpsGreedy(env, 0.9, 0.0, 200)
 
 nb_actions = 1
 for i in env.action_space.nvec:

@@ -93,27 +93,23 @@ def get_prob(x, n, c):
     return prob
 
 # Find delta_n = n - x0
-x0 = 2
-c0 = 0.25
-probs = []
-delta_n = []
-for n in range(x0, 10):
-    prob = get_prob(x0, n, c0)
-    probs.append(prob)
-    delta_n.append(np.max([n - x0, 0]))
-print(probs)
-print(np.max([5, 6]))
-plt.plot(delta_n, probs, '-b*')
-plt.show()
+prob_array = np.zeros((3,3,10))
+x_dict = {}
+print(prob_array)
+x_array = []
+for x in range(3):
+    for fee in range(3):
+        for n in range(x, x + 10):
+            delta_n = n - x
+            c_fee = 1- 0.25 * (fee + 1)
+            prob = get_prob(x, n, c_fee)
+            prob_array[x][fee][delta_n] = prob
 
-# # Find optima c
-# x0 = 2
-# n_min = x0 + 2
-# probs = []
 #
-# for c in range(3):
-#     c_fee = 0.25 * (c + 1)
-#     prob = get_prob(x0, n_min, c_fee)
-#     probs.append(prob)
-#
-# print(probs)
+
+print(prob_array)
+plt.plot(np.arange(1, 10), prob_array[0][0][1:], '-b*', label='x=0')
+plt.plot(np.arange(1, 10), prob_array[1][0][1:], '-b*', label='x=1')
+plt.xlabel('delta_n')
+
+plt.show()
