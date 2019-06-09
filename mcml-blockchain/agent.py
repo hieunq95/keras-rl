@@ -3,6 +3,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import xlsxwriter
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten
@@ -14,12 +15,16 @@ from rl.memory import SequentialMemory
 
 from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
+from writer_v1 import MCMLWriter
 
 mempool = []
-env = Environment(mempool)
+workbook = xlsxwriter.Workbook('./build/results-1.xlsx')
+writer = MCMLWriter(workbook)
 
+env = Environment(mempool, writer)
+
+policy = MyEpsGreedy(env, 0.9, 0.0, 1000)
 processor = MyProcessor()
-policy = MyEpsGreedy(env, 0.9, 0.0, 200)
 
 nb_actions = 1
 for i in env.action_space.nvec:
@@ -44,8 +49,9 @@ dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmu
                enable_double_dqn=True, processor=processor)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
-dqn.fit(env, nb_steps=50000, visualize=False, verbose=2)
+dqn.fit(env, nb_steps=300000, visualize=False, verbose=2)
 
+workbook.close()
 plt.plot(np.arange(0, len(mempool)), mempool)
-plt.savefig('./build/mempool-test2.png')
+plt.savefig('./build/mempool-test1.png')
 plt.show()

@@ -4,6 +4,7 @@
 import numpy as np
 import math
 import gym
+import xlsxwriter
 from gym import spaces
 from gym.utils import seeding
 from rl.core import Processor
@@ -16,7 +17,8 @@ class Environment(gym.Env):
 
             - action_space: {d1, d2, ..., D, e1, e2, ..., E, r1, r2, ..., R}
             """
-    def __init__(self, mempool):
+    def __init__(self, mempool, writer):
+        self.writer = writer
         self.DATA_OFFSET = 0
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
@@ -35,11 +37,16 @@ class Environment(gym.Env):
 
         self.mempool_state = MEMPOOL_INIT
         self.mempools = mempool
+
+        self.accumulated_data = 0
+        self.episode_counter = 0
+        self.episode_reward = 0
+        self.step_counter = 0
+        self.step_total = 0
+        self.energy_per_episode = 0.0
+        self.latency_per_episode = 0.0
+
         self.DONE_FLAG = False
-        self.env_info = {
-            'Pr' : [],
-            'Mempool' : []
-        }
 
         self.seed(10000)
         self.reset()
@@ -71,7 +78,7 @@ class Environment(gym.Env):
         # TODO: mempool's transition
         for i in range(len(next_mempool_array)):
             if self.step_counter < self.TERMINATION:
-                next_mempool_array[i] = mempool_array[i] + 0.95 * np.random.exponential(1/self.TERMINATION)
+                next_mempool_array[i] = mempool_array[i] + 0.95 * np.random.exponential(1.0/self.TERMINATION)
             else:
                 next_mempool_array[i] = max(mempool_array[i] - np.random.exponential(1), 0)
 
@@ -89,6 +96,12 @@ class Environment(gym.Env):
         return next_state
 
     def calculate_latency(self, action):
+        """
+        Calculate traning latency
+        :param action: Taken action
+
+        :return: Latency of the training step
+        """
         # print('calculate_latency: action {}'.format(action))
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
@@ -218,9 +231,9 @@ class Environment(gym.Env):
     def step(self, action):
         # assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         # print('action {}'.format(action))
+        self.step_counter += 1
         corrected_action = self.check_action(action)
         # print('corrected_action {}'.format(corrected_action))
-        self.step_counter += 1
         # TODO : termination as block generation time follows exponential distribution with mean = 600
         TERMINATION = self.TERMINATION
 
@@ -233,8 +246,35 @@ class Environment(gym.Env):
 
         reward = self.get_reward(corrected_action)
 
+        # For statistic only
+        self.step_total += 1
+        self.episode_reward += reward
+        energy = np.copy(corrected_action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        data = np.copy(corrected_action[self.DATA_OFFSET:self.ENERGY_OFFSET])
+        latency = self.calculate_latency(corrected_action)
+        self.energy_per_episode += np.sum(energy)
+        self.latency_per_episode += latency
+        self.accumulated_data += data
+        # End of statistic
+
         if self.step_counter == TERMINATION:
             done = True
+            # For statistic only
+            self.episode_counter += 1
+            logs = {
+                       'episode': self.episode_counter,
+                       'episode_reward': self.episode_reward,
+                       'energy': 100.0 * self.energy_per_episode / self.step_counter,
+                       'latency': 100.0 * self.latency_per_episode / self.step_counter,
+                       'step_total': self.step_total,
+                       'episode_steps': self.step_counter,
+                       'reward_mean': self.episode_reward / self.step_counter,
+                       # 'training_data_mean': self.accumulated_data / self.step_counter,
+                   },
+            print(self.mempool_state)
+            # export results to excel file
+            self.writer.general_write(logs, self.episode_counter)
+            # End of statistic
         else:
             done = False
 
@@ -253,10 +293,16 @@ class Environment(gym.Env):
         self.mempools.append(self.mempool_state)
 
         self.state = state
-
-        self.step_counter = 0
         self.TERMINATION = np.int(np.random.poisson(200))
         self.DONE_FLAG = False
+
+        # For statistic only
+        self.step_counter = 0
+        self.episode_reward = 0
+        self.energy_per_episode = 0
+        self.latency_per_episode = 0
+        # End of statistic
+
         return self.state
 
     def seed(self, seed=None):
@@ -270,21 +316,6 @@ class Environment(gym.Env):
         :return: Config info
         """
         return self.DONE_FLAG
-
-    def set_env_info(self, p, m):
-        """
-        Set values for dictionary including envoriment's information
-        :param p: probability of adding block
-
-        :param m: mempool state
-
-        :return:
-        """
-        self.env_info.get('Pr').append(p)
-        self.env_info.get('Mempool').append(m)
-
-    def get_env_info(self):
-        return self.env_info
 
 class MyProcessor(Processor):
 
