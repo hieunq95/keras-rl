@@ -17,8 +17,10 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
+TEST_ITERATOR = 4
+
 mempool = []
-workbook = xlsxwriter.Workbook('./build/results-1.xlsx')
+workbook = xlsxwriter.Workbook('./build/results-{}.xlsx'.format(TEST_ITERATOR))
 writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
@@ -47,11 +49,12 @@ memory = SequentialMemory(limit=5000, window_length=1)
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
                target_model_update=1e-2, policy=policy,
                enable_double_dqn=True, processor=processor)
+# TODO: what learning rate is efficient enough
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 dqn.fit(env, nb_steps=300000, visualize=False, verbose=2)
 
 workbook.close()
 plt.plot(np.arange(0, len(mempool)), mempool)
-plt.savefig('./build/mempool-test1.png')
+plt.savefig('./build/mempool-test-{}.png'.format(TEST_ITERATOR))
 plt.show()

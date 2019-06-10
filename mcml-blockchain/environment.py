@@ -45,6 +45,7 @@ class Environment(gym.Env):
         self.step_total = 0
         self.energy_per_episode = 0.0
         self.latency_per_episode = 0.0
+        self.confirm_probability = 0.0
 
         self.DONE_FLAG = False
 
@@ -142,8 +143,8 @@ class Environment(gym.Env):
         alpha_D = 3
         alpha_L = 1
         alpha_E = 1
-        REWARD_BASE = 2
-        REWARD_PENATY = 0
+        REWARD_BASE = 3
+        REWARD_PENATY = 1
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
@@ -251,10 +252,13 @@ class Environment(gym.Env):
         self.episode_reward += reward
         energy = np.copy(corrected_action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
         data = np.copy(corrected_action[self.DATA_OFFSET:self.ENERGY_OFFSET])
+        feerate = np.copy(np.copy(action[self.FEERATE_OFFSET:]))
         latency = self.calculate_latency(corrected_action)
         self.energy_per_episode += np.sum(energy)
         self.latency_per_episode += latency
         self.accumulated_data += data
+        self.confirm_probability += self._get_confirm_prob(np.int(self.mempool_state),
+                                                          np.int(self.mempool_state + 1), np.min(feerate))
         # End of statistic
 
         if self.step_counter == TERMINATION:
@@ -262,14 +266,16 @@ class Environment(gym.Env):
             # For statistic only
             self.episode_counter += 1
             logs = {
-                       'episode': self.episode_counter,
-                       'episode_reward': self.episode_reward,
-                       'energy': 100.0 * self.energy_per_episode / self.step_counter,
-                       'latency': 100.0 * self.latency_per_episode / self.step_counter,
-                       'step_total': self.step_total,
-                       'episode_steps': self.step_counter,
-                       'reward_mean': self.episode_reward / self.step_counter,
-                       # 'training_data_mean': self.accumulated_data / self.step_counter,
+                    'episode': self.episode_counter,
+                    'episode_reward': self.episode_reward,
+                    'energy': 100.0 * self.energy_per_episode / self.step_counter,
+                    'latency': 100.0 * self.latency_per_episode / self.step_counter,
+                    'step_total': self.step_total,
+                    'episode_steps': self.step_counter,
+                    'reward_mean': self.episode_reward / self.step_counter,
+                    'mempool_state': self.mempool_state,
+                    'confirm_prob': self.confirm_probability / self.step_counter,
+                   # 'training_data_mean': self.accumulated_data / self.step_counter,
                    },
             print(self.mempool_state)
             # export results to excel file
@@ -301,6 +307,7 @@ class Environment(gym.Env):
         self.episode_reward = 0
         self.energy_per_episode = 0
         self.latency_per_episode = 0
+        self.confirm_probability = 0.0
         # End of statistic
 
         return self.state

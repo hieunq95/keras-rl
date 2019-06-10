@@ -86,30 +86,33 @@ for i in range(len(fee_rate)):
 # plt.show()
 
 # Calculate probability of confirmation time
-def get_prob(x, n, c):
+def get_prob(x, n, fee):
+    c = 1 - 0.25 * (fee + 1)
     y = np.max([(n - x) / c, 0]) #max((n - x) / c, 0)
     sigma = np.array([y ** k * np.exp(-y) / math.factorial(k) for k in range(n)]).sum()
     prob = 1 - sigma
     return prob
 
 # Find delta_n = n - x0
-prob_array = np.zeros((3,3,10))
-x_dict = {}
-print(prob_array)
-x_array = []
-for x in range(3):
-    for fee in range(3):
-        for n in range(x, x + 10):
-            delta_n = n - x
-            c_fee = 1- 0.25 * (fee + 1)
-            prob = get_prob(x, n, c_fee)
-            prob_array[x][fee][delta_n] = prob
-
+# prob_array = np.zeros((3,3,10))
+# x_dict = {}
+# print(prob_array)
+# x_array = []
+# for x in range(3):
+#     for fee in range(3):
+#         for n in range(x, x + 10):
+#             delta_n = n - x
+#             c_fee = 1- 0.25 * (fee + 1)
+#             prob = get_prob(x, n, c_fee)
+#             prob_array[x][fee][delta_n] = prob
 #
+# print(prob_array)
+# plt.plot(np.arange(1, 10), prob_array[0][0][1:], '-b*', label='x=0')
+# plt.plot(np.arange(1, 10), prob_array[1][0][1:], '-b*', label='x=1')
+# plt.xlabel('delta_n')
+# plt.show()
 
-print(prob_array)
-plt.plot(np.arange(1, 10), prob_array[0][0][1:], '-b*', label='x=0')
-plt.plot(np.arange(1, 10), prob_array[1][0][1:], '-b*', label='x=1')
-plt.xlabel('delta_n')
-
-plt.show()
+# Find feerate for faster confirmation time and also ensure probability >= 95%
+for i in range(1, 20):
+    for fee in range(3):
+        print (i, fee, get_prob(i, i + 1, fee))
