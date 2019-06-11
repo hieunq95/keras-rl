@@ -17,7 +17,7 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 4
+TEST_ITERATOR = 6
 
 mempool = []
 workbook = xlsxwriter.Workbook('./build/results-{}.xlsx'.format(TEST_ITERATOR))
@@ -25,7 +25,7 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-policy = MyEpsGreedy(env, 0.9, 0.0, 1000)
+policy = MyEpsGreedy(env, 0.9, 0.1, 1000, writer)
 processor = MyProcessor()
 
 nb_actions = 1
@@ -57,4 +57,4 @@ dqn.fit(env, nb_steps=300000, visualize=False, verbose=2)
 workbook.close()
 plt.plot(np.arange(0, len(mempool)), mempool)
 plt.savefig('./build/mempool-test-{}.png'.format(TEST_ITERATOR))
-plt.show()
+# plt.show()

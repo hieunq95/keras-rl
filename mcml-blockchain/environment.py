@@ -8,7 +8,7 @@ import xlsxwriter
 from gym import spaces
 from gym.utils import seeding
 from rl.core import Processor
-from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MEMPOOL_INIT
+from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MEMPOOL_INIT, MEMPOOL_SLOPE
 
 class Environment(gym.Env):
 
@@ -79,7 +79,7 @@ class Environment(gym.Env):
         # TODO: mempool's transition
         for i in range(len(next_mempool_array)):
             if self.step_counter < self.TERMINATION:
-                next_mempool_array[i] = mempool_array[i] + 0.95 * np.random.exponential(1.0/self.TERMINATION)
+                next_mempool_array[i] = mempool_array[i] + MEMPOOL_SLOPE * np.random.exponential(1.0/self.TERMINATION)
             else:
                 next_mempool_array[i] = max(mempool_array[i] - np.random.exponential(1), 0)
 
@@ -165,9 +165,10 @@ class Environment(gym.Env):
 
         current_block = self.state[-1]
         current_block = np.int(current_block)
-        feerate_min = np.min(feerate)
-        fastest_confirm_prob = self._get_confirm_prob(current_block, current_block + 1, feerate_min)
-
+        # TODO: should be max or min feerate ?
+        feerate_chosen = np.max(feerate)
+        fastest_confirm_prob = self._get_confirm_prob(current_block, current_block + 1, feerate_chosen)
+        # print(fastest_confirm_prob)
         if fastest_confirm_prob < 0.95:
             reward -= REWARD_PENATY
         # else:
@@ -258,7 +259,7 @@ class Environment(gym.Env):
         self.latency_per_episode += latency
         self.accumulated_data += data
         self.confirm_probability += self._get_confirm_prob(np.int(self.mempool_state),
-                                                          np.int(self.mempool_state + 1), np.min(feerate))
+                                                          np.int(self.mempool_state + 1), np.max(feerate))
         # End of statistic
 
         if self.step_counter == TERMINATION:
@@ -277,7 +278,6 @@ class Environment(gym.Env):
                     'confirm_prob': self.confirm_probability / self.step_counter,
                    # 'training_data_mean': self.accumulated_data / self.step_counter,
                    },
-            print(self.mempool_state)
             # export results to excel file
             self.writer.general_write(logs, self.episode_counter)
             # End of statistic
@@ -328,10 +328,10 @@ class MyProcessor(Processor):
 
     def __init__(self):
         self.metrics_names = []
-
-        self.DATA_ORDER = DATA_MAX + 1
-        self.ENERGY_ORDER = ENERGY_MAX + 1
-        self.FEERATE_ORDER = FEERATE_MAX + 1
+        # TODO: check order of converter
+        self.DATA_ORDER = DATA_MAX
+        self.ENERGY_ORDER = ENERGY_MAX
+        self.FEERATE_ORDER = FEERATE_MAX
 
         self.ACTION_SIZE = 3 * NB_DEVICES
         self.DATA_OFFSET = 0
@@ -346,7 +346,7 @@ class MyProcessor(Processor):
 
             :return: action in array
             """
-
+        # print(action)
         data_array, energy_array, feerate_array = [], [], []
         action_clone = np.copy(action)
 
@@ -357,18 +357,17 @@ class MyProcessor(Processor):
                 action_clone -= data_i * divisor
                 data_array.append(data_i)
 
-            elif (i < self.FEERATE_OFFSET):
+            elif i >= self.ENERGY_OFFSET and i < self.FEERATE_OFFSET:
                 divisor = self.ENERGY_ORDER ** (self.ACTION_SIZE - (i + 1))
                 energy_i = action_clone // divisor
                 action_clone -= energy_i * divisor
                 energy_array.append(energy_i)
 
-            else:
+            elif i >= self.FEERATE_OFFSET:
                 divisor = self.FEERATE_ORDER ** (self.ACTION_SIZE - (i + 1))
                 feerate_i = action_clone // divisor
                 action_clone -= feerate_i * divisor
                 feerate_array.append(feerate_i)
-
 
         processed_action = np.array([data_array, energy_array, feerate_array]).flatten()
 

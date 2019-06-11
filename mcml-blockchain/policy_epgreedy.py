@@ -8,8 +8,9 @@ class MyEpsGreedy(Policy):
     """
     Implement the epsilon greedy policy
     """
-    def __init__(self, environment, eps_max, eps_min, eps_training):
+    def __init__(self, environment, eps_max, eps_min, eps_training, writer):
         super(MyEpsGreedy, self).__init__()
+        self.writer = writer
         self.environment = environment
         self.eps_max = eps_max
         self.eps_min = eps_min
@@ -43,8 +44,8 @@ class MyEpsGreedy(Policy):
             action = np.argmax(q_values)
 
         if self.environment.is_terminated():
-            print("epsilon {}".format(self.eps))
-        #     self.writer.epsilon_write(self.eps, self.episode_counter)
+            # print("epsilon {}".format(self.eps))
+            self.writer.epsilon_write(self.eps, self.episode_counter)
 
         return action
 

@@ -20,6 +20,9 @@ class MCMLWriter():
         self.worksheet2.write('A1', 'Episode', bold)
         self.worksheet2.write('B1', 'Epsilon', bold)
 
+        # self.worksheet3 = workbook.add_worksheet()
+
+
     def general_write(self, logs, episode):
         """
         Write information to xlsx file
@@ -59,3 +62,13 @@ class MCMLWriter():
               "energy {}, latency {}".
               format(info.get('step_total'), episode, info.get('episode_steps'), info.get('episode_reward'),
                      info.get('reward_mean'), info.get('energy'), info.get('latency')))
+
+    # def experiment_info_write(self, logs):
+    #     """
+    #     Write experiment's parameters
+    #
+    #     :param info:
+    #     :return:
+    #     """
+    #     info = dict(*logs)
+    #     self.worksheet2
