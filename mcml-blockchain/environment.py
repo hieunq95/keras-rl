@@ -35,6 +35,9 @@ class Environment(gym.Env):
         self.observation_space = spaces.Box(low=state_lower_bound, high=state_upper_bound, dtype=np.float32)
         self.action_space = spaces.MultiDiscrete(action_array)
 
+        self.TERMINATION = np.int(np.random.poisson(300))
+        self.ACTION_PENALTY = 0
+
         self.mempool_state = MEMPOOL_INIT
         self.mempools = mempool
 
@@ -50,7 +53,7 @@ class Environment(gym.Env):
         self.DONE_FLAG = False
 
         self.seed(10000)
-        self.reset()
+        # self.reset()
         self.step_counter = 0
 
     def state_transition(self, state, action):
@@ -140,11 +143,11 @@ class Environment(gym.Env):
         tau = 10 ** (-28)
         nu = 10 ** 10
         delta = 1
-        alpha_D = 3
+        alpha_D = 1
         alpha_L = 1
         alpha_E = 1
-        REWARD_BASE = 3
-        REWARD_PENATY = 1
+        REWARD_BASE = 0
+        REWARD_PENATY = 0
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
@@ -157,11 +160,15 @@ class Environment(gym.Env):
         accumulated_data = np.sum(data)
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
-
-        reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD\
-                 - alpha_L * latency / LATENCY_THRESOLD
-        reward *= 10
+        # TODO : shaping reward function
+        reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD #\
+                                                                #- alpha_L * latency / LATENCY_THRESOLD
+        reward = reward ** 2
+        # reward *= 10
         reward += REWARD_BASE
+
+        if self.ACTION_PENALTY > 0:
+            reward -= REWARD_PENATY * self.ACTION_PENALTY
 
         current_block = self.state[-1]
         current_block = np.int(current_block)
@@ -169,8 +176,8 @@ class Environment(gym.Env):
         feerate_chosen = np.max(feerate)
         fastest_confirm_prob = self._get_confirm_prob(current_block, current_block + 1, feerate_chosen)
         # print(fastest_confirm_prob)
-        if fastest_confirm_prob < 0.95:
-            reward -= REWARD_PENATY
+        # if fastest_confirm_prob < 0.95:
+        #     reward -= REWARD_PENATY
         # else:
             # print(fastest_confirm_prob)
 
@@ -180,8 +187,8 @@ class Environment(gym.Env):
         corrected_energy = np.copy(energy)
         for i in range(len(cpu_shares)):
             if cpu_cycles[i] > 0.6 * 10 ** 9 * cpu_shares[i]:
-                corrected_energy[i] = ENERGY_MAX + 1
-
+                # corrected_energy[i] = ENERGY_MAX + 1
+                self.ACTION_PENALTY += 1
         return corrected_energy
 
     def _calculate_cpu_cycles(self, energy, data):
@@ -201,7 +208,7 @@ class Environment(gym.Env):
 
         - if energy or data = 0, then both should be 0
 
-        - if cpu_cycle_required > u * cpu_shares, then let energy_action = MAX_ACTION + 1 to notice agent should not  make any state transition for this device
+        - if cpu_cycle_required > u * cpu_shares, then let self.ACTION_PENALTY = number_of_mismatch_actions to notice agent should not make any state transition for this device and get a penalty
 
         :param data_array:
         :param energy_array:
@@ -234,6 +241,7 @@ class Environment(gym.Env):
         # assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         # print('action {}'.format(action))
         self.step_counter += 1
+        self.ACTION_PENALTY = 0
         corrected_action = self.check_action(action)
         # print('corrected_action {}'.format(corrected_action))
         # TODO : termination as block generation time follows exponential distribution with mean = 600
@@ -245,7 +253,7 @@ class Environment(gym.Env):
 
         self.mempool_state = next_state[-1]
         self.mempools.append(self.mempool_state)
-
+        # TODO: corrected_action is somehow incorrect
         reward = self.get_reward(corrected_action)
 
         # For statistic only
@@ -257,12 +265,14 @@ class Environment(gym.Env):
         latency = self.calculate_latency(corrected_action)
         self.energy_per_episode += np.sum(energy)
         self.latency_per_episode += latency
-        self.accumulated_data += data
+        self.accumulated_data += np.sum(data)
         self.confirm_probability += self._get_confirm_prob(np.int(self.mempool_state),
                                                           np.int(self.mempool_state + 1), np.max(feerate))
         # End of statistic
 
-        if self.step_counter == TERMINATION:
+        # TODO: terminated condition ?
+        # if self.step_counter == TERMINATION:
+        if self.accumulated_data >= 600:
             done = True
             # For statistic only
             self.episode_counter += 1
@@ -299,7 +309,8 @@ class Environment(gym.Env):
         self.mempools.append(self.mempool_state)
 
         self.state = state
-        self.TERMINATION = np.int(np.random.poisson(200))
+        self.TERMINATION = np.int(np.random.poisson(300))
+        self.ACTION_PENALTY = 0
         self.DONE_FLAG = False
 
         # For statistic only
@@ -308,6 +319,7 @@ class Environment(gym.Env):
         self.energy_per_episode = 0
         self.latency_per_episode = 0
         self.confirm_probability = 0.0
+        self.accumulated_data = 0
         # End of statistic
 
         return self.state
