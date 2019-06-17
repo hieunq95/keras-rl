@@ -17,7 +17,11 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 6
+TEST_ITERATOR = 21
+"""
+Iteration = 21, fix constrain energy_required > capacity then energy_required = ranint(0, capacity+1)
+reward range > 0
+"""
 
 mempool = []
 workbook = xlsxwriter.Workbook('./build/results-{}.xlsx'.format(TEST_ITERATOR))
@@ -25,7 +29,7 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-policy = MyEpsGreedy(env, 0.9, 0.1, 1000, writer)
+policy = MyEpsGreedy(env, 0.9, 0, 500, writer)
 processor = MyProcessor()
 
 nb_actions = 1
