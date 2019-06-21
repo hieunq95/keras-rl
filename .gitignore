@@ -80,3 +80,4 @@ gym-foo/gym_foo/*.h5f
 
 # Mcml - blockchain
 mcml-blockchain/build/
+mcml-blockchain/test/
