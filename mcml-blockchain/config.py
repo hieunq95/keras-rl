@@ -3,8 +3,8 @@ Config paremeters for Machine crowd machine learning block chain
 """
 NB_DEVICES = 3
 
-CPU_SHARES = 2
-CAPACITY_MAX = 2
+CPU_SHARES = 3
+CAPACITY_MAX = 3
 
 ENERGY_MAX = 3
 DATA_MAX = 3

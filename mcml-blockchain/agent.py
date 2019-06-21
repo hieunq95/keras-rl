@@ -17,9 +17,9 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 21
+TEST_ITERATOR = 33
 """
-Iteration = 21, fix constrain energy_required > capacity then energy_required = ranint(0, capacity+1)
+Iteration = 25, fix constrain energy_required > capacity then energy_required = ranint(0, capacity+1)
 reward range > 0
 """
 
@@ -29,7 +29,8 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-policy = MyEpsGreedy(env, 0.9, 0, 500, writer)
+policy = MyEpsGreedy(env, 0.9, 0, 2000, writer)
+# policy = EpsGreedyQPolicy()
 processor = MyProcessor()
 
 nb_actions = 1
@@ -56,7 +57,7 @@ dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmu
 # TODO: what learning rate is efficient enough
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
-dqn.fit(env, nb_steps=300000, visualize=False, verbose=2)
+dqn.fit(env, nb_steps=800000, visualize=False, verbose=2)
 
 workbook.close()
 plt.plot(np.arange(0, len(mempool)), mempool)

@@ -30,9 +30,10 @@ for t in range(3000):
     mempools.append(mempool)
     rewards.append(reward)
 
-    states.append(next_state[4])
-    # states.append(env.observation_space.sample()[3])
+    states.append(next_state[3])
+    # states.append(env.observation_space.sample()[2])
     actions.append(action[3])
+    # actions.append(action[3])
 
 # plt.plot(np.arange(0, len(rewards)), actions)
 
@@ -41,7 +42,7 @@ target1 = states
 target2 = actions
 target3 = rewards
 
-target = target3
+target = target1
 
 # hist = plt.hist([target1, target2])
 hist = plt.hist(target)
