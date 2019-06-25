@@ -1,16 +1,16 @@
-import gym
-import itertools
-import matplotlib
-import matplotlib.style
+# Solving frozen-lake using Q-learning
+# @author: Hieu Nguyen
+
 import numpy as np
-import pandas as pd
-import sys
+import gym
+import matplotlib.pyplot as plt
 
+env = gym.make('FrozenLake-v0')
+# env = gym.make('FrozenLake8x8-v0')
+env.seed(1000)
+print(env.action_space, env.observation_space)
+env.reset()
+for i in range(10):
+    env.step(1)
+    env.render()
 
-from collections import defaultdict
-from windy_gridworld import WindyGridworldEnv
-import plotting
-
-matplotlib.style.use('ggplot')
-
-env = WindyGridworldEnv()

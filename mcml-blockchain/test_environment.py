@@ -29,11 +29,9 @@ for t in range(3000):
     mempool = state[-1]
     mempools.append(mempool)
     rewards.append(reward)
-
-    states.append(next_state[3])
     # states.append(env.observation_space.sample()[2])
+    states.append(next_state[3])
     actions.append(action[3])
-    # actions.append(action[3])
 
 # plt.plot(np.arange(0, len(rewards)), actions)
 
@@ -42,8 +40,8 @@ target1 = states
 target2 = actions
 target3 = rewards
 
-target = target1
-
+# target = [target1, target2]
+target = target3
 # hist = plt.hist([target1, target2])
 hist = plt.hist(target)
 print(hist[0], hist[1])
@@ -56,5 +54,12 @@ print(hist_percentive, np.sum(hist_percentive))
 
 plt.show()
 
-plt.plot(np.arange(0, len(target)), target)
-plt.show()
+# plt.plot(np.arange(0, len(target)), target)
+# plt.show()
+
+# exponeltial = np.random.exponential(1.0, size=10000)
+# plt.hist(exponeltial)
+# plt.show()
+#
+# plt.plot(np.arange(0, len(exponeltial)), exponeltial)
+# plt.show()

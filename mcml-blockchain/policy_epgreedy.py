@@ -36,7 +36,7 @@ class MyEpsGreedy(Policy):
             if self.eps >= self.eps_min + self.eps_decay:
                 self.eps = self.eps - self.eps_decay
             else:
-                self.eps = 0
+                self.eps = self.eps_min
 
         if np.random.uniform() < self.eps:
             action = np.random.randint(0, nb_actions)

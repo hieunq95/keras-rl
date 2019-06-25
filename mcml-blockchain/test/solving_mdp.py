@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 # actions = []
 # states = []
 #
-# env = gym.make('FrozenLake-v0')
-env = gym.make('FrozenLake8x8-v0')
+env = gym.make('FrozenLake-v0')
+# env = gym.make('FrozenLake8x8-v0')
 env.seed(1000)
 print(env.action_space, env.observation_space)
 env.render()
@@ -30,58 +30,57 @@ env.render()
 
 HOLE = b'H'
 GOAL = b'G'
-nrow = 8
-ncol = 8
+nrow = 4
+ncol = 4
 
 LEFT = 0
 DOWN = 1
 RIGHT = 2
 UP = 3
 
-reward_matrix = []
 q_table = np.zeros((env.observation_space.n, env.action_space.n))
 
 # Value iteration: update value_matrix according to Bellman equation
 value_matrix = np.zeros((nrow, ncol))
 print(env.desc)
-print(value_matrix)
 
-def q_reward(s):
-    row = s[0]
-    col = s[1]
-    if env.desc[row][col] == HOLE:
+def q_reward(s,a):
+    row = s // ncol
+    col = s - row * ncol
+    new_state = next_state(row,col,a,1)
+    new_row = new_state[0]
+    new_col = new_state[1]
+
+    if env.desc[new_row][new_col] == HOLE:
         reward = -1
-    elif env.desc[row][col] == GOAL:
+    elif env.desc[new_row][new_col] == GOAL:
         reward = 1
     else:
         reward = 0
     return reward
 
-def qlearning_update(s, a, lr=0.1, gamma=0.9):
+def qlearning_update(s, lr=0.1, gamma=0.9):
     row = s // ncol
     col = s - row * ncol
-    # state_offset = row * ncol + col
-    q_values = []
-    new_state = next_state(row, col, a, 0.8)
-    state_offset = new_state[0] * ncol + new_state[1]
-    for action in range(0, env.action_space.n):
-        tmp_q_value = (1-lr)*q_table[row][col] + lr*(q_reward(new_state) + gamma*q_table[state_offset][action])
-        q_values.append(tmp_q_value)
-    new_q_value, taken_action = np.max(q_values), np.argmax(q_values)
-    q_table[state_offset][taken_action] = new_q_value
-    # return  q_table
+    optimal_action = optimal_policy(q_table, row, col)
+    new_state = next_state(row, col, optimal_action, 1)
+    new_state = new_state[0] * ncol + new_state[1]
+    for a in range(env.action_space.n):
+        q_table[s][a] = (1-lr)*q_table[s][a] + lr*(q_reward(s,a) + gamma*np.max(q_table[new_state]))
+
+    return q_table
 
 def get_reward(next_state):
     row = next_state[0]
     col = next_state[1]
     return reward_matrix[row][col]
 
-def optimal_policy(row, col):
+def optimal_policy(state_matrix,row, col):
     nbr_values = []
-    right_nbr = value_matrix[row][col+1] if col + 1 < ncol else 0
-    left_nbr = value_matrix[row][col-1] if col - 1 > 0 else 0
-    up_nbr = value_matrix[row-1][col] if row - 1 > 0 else 0
-    down_nbr = value_matrix[row+1][col] if row + 1 < nrow else 0
+    right_nbr = state_matrix[row][col+1] if col + 1 < ncol else 0
+    left_nbr = state_matrix[row][col-1] if col - 1 > 0 else 0
+    up_nbr = state_matrix[row-1][col] if row - 1 > 0 else 0
+    down_nbr = state_matrix[row+1][col] if row + 1 < nrow else 0
     nbr_values.append(left_nbr)
     nbr_values.append(down_nbr)
     nbr_values.append(right_nbr)
@@ -140,57 +139,62 @@ def update_value(state, gamma=0.9, p=0.8):
     new_value = max(bellman_values)
     value_matrix[x_pos][y_pos] = new_value
 
+def init_value_matrix():
+    for i in range(ncol):
+        for j in range(nrow):
+            if env.desc[i][j] == HOLE:
+                value_matrix[i][j] = -1
+            elif env.desc[i][j] == GOAL:
+                value_matrix[i][j] = 1
+            else:
+                value_matrix[i][j] = 0
 
-for i in range(ncol):
-    for j in range(nrow):
-        if env.desc[i][j] == HOLE:
-            value_matrix[i][j] = -1
-        elif env.desc[i][j] == GOAL:
-            value_matrix[i][j] = 1
-        else:
-            value_matrix[i][j] = 0
+def value_iteration(iterator=500):
+    # Value iteration algorithm
+    for k in range(iterator):
+        for row in range(nrow):
+            for col in range(ncol):
+                update_value([row, col], p=1)
+        optimal_values.append(value_matrix[-1][-1])
 
-# reward_matrix = value_matrix
-reward_matrix = np.copy(value_matrix)
-print(reward_matrix)
+def test(episode=20):
+    for ep in range(episode):
+        curr_position = (0, 0)
+        step_counter = 0
+        policy = []
+        for step in range(30):
+            step_counter += 1
+            # row = curr_position // ncol
+            # col = curr_position - row * ncol
+            row = curr_position[0]
+            col = curr_position[1]
+            action = optimal_policy(value_matrix,row, col)
+            if action == 0:
+                policy.append('LEFT')
+            elif action == 1:
+                policy.append('DOWN')
+            elif action == 2:
+                policy.append('RIGHT')
+            elif action == 3:
+                policy.append('UP')
+
+            next_position = next_state(row, col, action, p=1)
+            curr_position = next_position
+            if curr_position == (nrow - 1, ncol - 1):
+                break
+            # if reward_matrix[curr_position[0]][curr_position[1]] == -1:
+            #     print('Hole')
+            #     break
+        print(policy)
+
+
 optimal_values = []
-# Value iteration algorithm
-for k in range(50000):
-    for row in range(nrow):
-        for col in range(ncol):
-            update_value([row, col], p=0.8)
-    optimal_values.append(value_matrix[-1][-1])
-    # print(value_matrix)
+init_value_matrix()
+reward_matrix = np.copy(value_matrix)
+value_iteration(500)
+print(reward_matrix)
 print(value_matrix)
-# plt.plot(np.arange(0, len(optimal_values)), optimal_values)
-# plt.show()
+test(2)
 
-# After value iteration
-for ep in range(20):
-    curr_position = (0,0)
-    step_counter = 0
-    policy = []
-    for step in range(10):
-        step_counter += 1
-        # row = curr_position // ncol
-        # col = curr_position - row * ncol
-        row = curr_position[0]
-        col = curr_position[1]
-        action = optimal_policy(row, col)
-        if action == 0:
-            policy.append('LEFT')
-        elif action == 1:
-            policy.append('DOWN')
-        elif action == 2:
-            policy.append('RIGHT')
-        elif action == 3:
-            policy.append('UP')
 
-        next_position = next_state(row, col, action,p=1)
-        curr_position = next_position
-        if curr_position == (nrow-1, ncol-1):
-            break
-        # if reward_matrix[curr_position[0]][curr_position[1]] == -1:
-        #     print('Hole')
-        #     break
-    print(policy)
+

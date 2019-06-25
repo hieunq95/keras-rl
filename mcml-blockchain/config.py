@@ -13,6 +13,8 @@ MEMPOOL_MAX = 10
 MEMPOOL_INIT = 2
 MEMPOOL_SLOPE = 0.75
 #TODO: derive a function for feerate and the slope of mempool
-FEERATE_MAX = 3
+FEERATE_MAX = 4
 
 INTERARRIVAL_RATE = 0.25
+
+TERMINATION_STEPS = 400
