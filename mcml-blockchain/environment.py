@@ -23,14 +23,14 @@ class Environment(gym.Env):
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
 
-        # action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX])
+        # action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX]).repeat(NB_DEVICES)
         action_array = np.array([DATA_MAX, ENERGY_MAX]).repeat(NB_DEVICES)
 
         state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
-        state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET]
+        state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
 
         state_upper_bound = np.array([CPU_SHARES, CAPACITY_MAX, MEMPOOL_MAX]).repeat(NB_DEVICES)
-        state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET]
+        state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET + 1]
 
         self.observation_space = spaces.Box(low=state_lower_bound, high=state_upper_bound, dtype=np.float32)
         self.action_space = spaces.MultiDiscrete(action_array)
@@ -50,8 +50,11 @@ class Environment(gym.Env):
         self.energy_per_episode = 0.0
         self.latency_per_episode = 0.0
         self.confirm_probability = 0.0
-
+        self.nb_waiting_blocks = 0
         self.DONE_FLAG = False
+
+        self.estimated_feerate = 0
+        self.delta_feerate = 0
 
         self.seed(123)
         # self.reset()
@@ -74,8 +77,8 @@ class Environment(gym.Env):
         capacity_array = np.copy(state[SECOND_OFFSET:THIRD_OFFSET])
         mempool_array = np.copy(state[THIRD_OFFSET:])
 
-        # energy_array = np.copy(action[SECOND_OFFSET:THIRD_OFFSET])
-        energy_array = np.copy(action[SECOND_OFFSET:])
+        energy_array = np.copy(action[SECOND_OFFSET:THIRD_OFFSET])
+        # energy_array = np.copy(action[SECOND_OFFSET:])
         # charging_array = np.random.poisson(1, size=len(energy_array))
         charging_array = np.random.exponential(0.25, size=len(energy_array))
         next_capacity_array = np.zeros(len(capacity_array))
@@ -85,7 +88,7 @@ class Environment(gym.Env):
             if self.step_counter < self.TERMINATION:
                 next_mempool_array[i] = mempool_array[i] + MEMPOOL_SLOPE * np.random.exponential(1.0/self.TERMINATION)
             else:
-                next_mempool_array[i] = max(mempool_array[i] - np.random.exponential(1), 0)
+                next_mempool_array[i] = max(mempool_array[i] - np.random.exponential(1.0), 0)
         # TODO: state trasition - should do transition when mismatch the constrain ?
         # cpu_shares_array = np.random.randint(CPU_SHARES, size=NB_DEVICES)
         cpu_shares_array = self.nprandom.rand(NB_DEVICES) * CPU_SHARES
@@ -94,7 +97,7 @@ class Environment(gym.Env):
             next_capacity_array[i] = min(capacity_array[i] - energy_array[i] + charging_array[i], CAPACITY_MAX)
         # Broadcast the size of mempool to the size of capacity
         next_mempool_array = next_mempool_array.repeat(NB_DEVICES)
-        next_state = np.array([cpu_shares_array, next_capacity_array], dtype=np.float32).flatten()
+        next_state = np.array([cpu_shares_array, next_capacity_array, next_mempool_array], dtype=np.float32).flatten()
         # Get first seven elements
         next_state = next_state[:THIRD_OFFSET+1]
 
@@ -109,8 +112,8 @@ class Environment(gym.Env):
         """
         # print('calculate_latency: action {}'.format(action))
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
-        # energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
-        energy = np.copy(action[self.ENERGY_OFFSET:])
+        energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        # energy = np.copy(action[self.ENERGY_OFFSET:])
         cpu_cycles = self._calculate_cpu_cycles(energy, data)
         latency_array = np.zeros(len(cpu_cycles))
         for k in range(len(cpu_cycles)):
@@ -134,9 +137,7 @@ class Environment(gym.Env):
         """
         # #TODO: Calculate the slope of mempool as a function of r, i.e. arrival rate
         # c(r) = 1 - 0.25 * (r + 1)
-        if r >= 2:
-            r = 2
-        c = 1 - 0.25 * (r + 1)
+        c = 0.25
         y = np.max([(n - x) / c, 0])  # max((n - x) / c, 0)
         sigma = np.array([y ** k * np.exp(-y) / math.factorial(k) for k in range(n)]).sum()
         prob = 1 - sigma
@@ -145,16 +146,16 @@ class Environment(gym.Env):
     def get_reward(self, action):
         tau = 10 ** (-28)
         nu = 10 ** 10
-        delta = 1
+        delta = 3
         alpha_D = 1
         alpha_L = 1
         alpha_E = 1
-        REWARD_BASE = 0
+        REWARD_BASE = 1
         REWARD_PENATY = 0
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
-        # energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
-        energy = np.copy(action[self.ENERGY_OFFSET:])
+        energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        # energy = np.copy(action[self.ENERGY_OFFSET:])
         # feerate = np.copy(action[self.FEERATE_OFFSET:])
 
         ENERGY_THRESOLD = ENERGY_MAX * NB_DEVICES
@@ -164,6 +165,7 @@ class Environment(gym.Env):
         accumulated_data = np.sum(data)
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
+        # feerate_avg = np.average(feerate)
         # TODO : shaping reward function
         reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD \
                                                                 - alpha_L * latency / LATENCY_THRESOLD
@@ -172,24 +174,35 @@ class Environment(gym.Env):
         # reward = reward ** 2
         if self.ACTION_PENALTY > 0:
             reward -= REWARD_PENATY * self.ACTION_PENALTY
-        # reward clipping
-        # reward /= 11
-        if reward > 0:
-            reward = 1
-        else:
-            reward = 0
-
         current_block = self.state[-1]
         current_block = np.int(current_block)
         # TODO: should be max or min feerate ?
-        # feerate_chosen = np.max(feerate)
-        # fastest_confirm_prob = self._get_confirm_prob(current_block, current_block + 1, feerate_chosen)
+        # probs = [0, 0]
+        # for k in range(20):
+        #     is_done = False
+        #     confirm_prob = self._get_confirm_prob(current_block, current_block + k, 0)
+        #     if confirm_prob >= 0.9:
+        #         # probs.append(current_block + k)
+        #         probs[0] = current_block + k
+        #         probs[1] = confirm_prob
+        #         # probs.append(confirm_prob)
+        #         is_done = True
+        #     if is_done:
+        #         break
+        #
+        # self.nb_waiting_blocks = probs[0]
+        # self.confirm_probability = probs[1]
+        # self.estimated_feerate = (self.nb_waiting_blocks - current_block) / 2
+        # TODO: derive the reward for delta_feerate
+        # self.delta_feerate = np.abs(feerate_avg - self.estimated_feerate)
 
-        # print(fastest_confirm_prob)
-        # if fastest_confirm_prob < 0.95:
-        #     reward -= REWARD_PENATY
+        # reward -= self.delta_feerate
+        # reward clipping
+        # reward /= 11
+        # if reward > 0:
+        #     reward = 1
         # else:
-            # print(fastest_confirm_prob)
+        #     reward = 0
 
         return reward
 
@@ -232,8 +245,8 @@ class Environment(gym.Env):
         cpushares_array = np.copy(state[self.DATA_OFFSET:self.ENERGY_OFFSET])
         capacity_array = np.copy(state[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
         data_array = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
-        # energy_array = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
-        energy_array = np.copy(action[self.ENERGY_OFFSET:])
+        energy_array = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        # energy_array = np.copy(action[self.ENERGY_OFFSET:])
         # feerate_array = np.copy(action[self.FEERATE_OFFSET:])
         # TODO: correct the constrain, do not change the action, just count for a penalty of the action miss the constrain
         for i in range(len(energy_array)):
@@ -255,7 +268,7 @@ class Environment(gym.Env):
         return corrected_action
 
     def step(self, action):
-        # assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
+        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         # print('action {}'.format(action))
         self.step_counter += 1
         self.ACTION_PENALTY = 0
@@ -286,8 +299,8 @@ class Environment(gym.Env):
         # End of statistic
 
         # TODO: terminated condition ?
-        if self.step_counter == self.TERMINATION:
-        # if self.accumulated_data >= 600:
+        # if self.step_counter == self.TERMINATION:
+        if self.accumulated_data >= 1500:
             done = True
             # For statistic only
             self.episode_counter += 1
@@ -299,9 +312,12 @@ class Environment(gym.Env):
                     'step_total': self.step_total,
                     'episode_steps': self.step_counter,
                     'reward_mean': self.episode_reward / self.step_counter,
-                    'mempool_state': self.mempool_state,
-                    'confirm_prob': self.confirm_probability / self.step_counter,
                     'training_data_mean': self.accumulated_data / self.step_counter,
+                    'mempool_state': self.mempool_state,
+                    'waiting_blocks': self.nb_waiting_blocks,
+                    'confirm_prob': self.confirm_probability,
+                    'feerate_from_cdf': self.estimated_feerate,
+                    'delta_feerate': self.delta_feerate,
                    },
             # export results to excel file
             self.writer.general_write(logs, self.episode_counter)
@@ -320,7 +336,7 @@ class Environment(gym.Env):
         capacity_init = self.nprandom.rand(NB_DEVICES) * CAPACITY_MAX
         mempool_init = np.full((NB_DEVICES, ), self.mempool_state)
         state = np.array([cpu_shares_init, capacity_init, mempool_init]).flatten()
-        state = state[:self.FEERATE_OFFSET]
+        state = state[:self.FEERATE_OFFSET + 1]
 
         self.mempool_state = state[-1]
         self.mempools.append(self.mempool_state)
@@ -331,6 +347,10 @@ class Environment(gym.Env):
         self.ACTION_PENALTY = 0
         self.DONE_FLAG = False
 
+        self.estimated_feerate = 0
+        self.delta_feerate = 0
+
+        self.nb_waiting_blocks = 0
         # For statistic only
         self.step_counter = 0
         self.episode_reward = 0
@@ -398,7 +418,7 @@ class MyProcessor(Processor):
             #     energy_i = action_clone // divisor
             #     action_clone -= energy_i * divisor
             #     energy_array.append(energy_i)
-
+            #
             # elif i >= self.FEERATE_OFFSET:
             #     divisor = self.FEERATE_ORDER ** (self.ACTION_SIZE - (i + 1))
             #     feerate_i = action_clone // divisor
