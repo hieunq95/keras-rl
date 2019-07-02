@@ -151,7 +151,7 @@ class Environment(gym.Env):
         alpha_D = 3
         alpha_L = 1
         alpha_E = 1
-        REWARD_BASE = 5
+        REWARD_BASE = 8
         REWARD_PENATY = 1
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
@@ -159,9 +159,9 @@ class Environment(gym.Env):
         # energy = np.copy(action[self.ENERGY_OFFSET:])
         # feerate = np.copy(action[self.FEERATE_OFFSET:])
 
-        ENERGY_THRESOLD = ENERGY_MAX * NB_DEVICES
-        DATA_THRESOLD = DATA_MAX * NB_DEVICES
-        LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * DATA_MAX ** 1.5
+        ENERGY_THRESOLD = (ENERGY_MAX-1) * NB_DEVICES
+        DATA_THRESOLD = (DATA_MAX-1) * NB_DEVICES
+        LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX-1) ** 1.5
 
         accumulated_data = np.sum(data)
         total_energy = np.sum(energy)
@@ -170,6 +170,7 @@ class Environment(gym.Env):
         # TODO : shaping reward function
         reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD \
                                                                 - alpha_L * latency / LATENCY_THRESOLD
+
         reward *= 5
         reward += REWARD_BASE
         # reward = reward ** 2
