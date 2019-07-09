@@ -42,9 +42,7 @@ class MyEpsGreedy(Policy):
             action = np.random.randint(0, nb_actions)
         else:
             action = np.argmax(q_values)
-
         if self.environment.is_terminated():
-            # print("epsilon {}".format(self.eps))
             self.writer.epsilon_write(self.eps, self.episode_counter)
 
         return action

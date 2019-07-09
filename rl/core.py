@@ -227,6 +227,12 @@ class Agent(object):
                     observation = None
                     episode_step = None
                     episode_reward = None
+                # TODO: hieunq - modified
+                if episode == 2000:
+                    callbacks.on_train_end()
+                    self._on_train_end()
+                    return history
+
         except KeyboardInterrupt:
             # We catch keyboard interrupts here so that training can be be safely aborted.
             # This is so common that we've built this right into this function, which ensures that

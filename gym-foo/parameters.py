@@ -38,7 +38,7 @@ class Parameters():
         self.REWARD_BASE = reward_base
         self.LAMBDA = 1
 
-        self.NB_STEPS = 500000 # 1347 episode
-        self.EPISODES_TRAINING = 200
+        self.NB_STEPS = 1000000 # 1347 episode
+        self.EPISODES_TRAINING = 600
 
-        self.XLSX_PATH = 'results-10.xlsx'
+        self.XLSX_PATH = 'results-13.xlsx'
