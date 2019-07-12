@@ -16,6 +16,6 @@ MEMPOOL_SLOPE = 0.75
 #TODO: derive a function for feerate and the slope of mempool
 
 
-INTERARRIVAL_RATE = 0.25
+INTERARRIVAL_RATE = 4
 
 TERMINATION_STEPS = 400

@@ -19,7 +19,7 @@ class MCMLWriter():
         self.worksheet1.write('J1', 'Confirm_probability', bold)
         self.worksheet1.write('K1', 'Waiting blocks', bold)
         self.worksheet1.write('L1', 'Estimated feerate', bold)
-        self.worksheet1.write('M1', 'Estimate-error feerate', bold)
+        self.worksheet1.write('M1', 'Payment', bold)
 
         self.worksheet2 = workbook.add_worksheet()
         self.worksheet2.write('A1', 'Episode', bold)
@@ -51,7 +51,7 @@ class MCMLWriter():
         self.worksheet1.write(episode, 9, info.get('confirm_prob'))
         self.worksheet1.write(episode, 10, info.get('waiting_blocks'))
         self.worksheet1.write(episode, 11, info.get('feerate_from_cdf'))
-        self.worksheet1.write(episode, 12, info.get('delta_feerate'))
+        self.worksheet1.write(episode, 12, info.get('payment'))
 
     def epsilon_write(self, logs, episode):
         """

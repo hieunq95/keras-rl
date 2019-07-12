@@ -8,7 +8,7 @@ import xlsxwriter
 from gym import spaces
 from gym.utils import seeding
 from rl.core import Processor
-from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MEMPOOL_INIT, MEMPOOL_SLOPE, TERMINATION_STEPS
+from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MEMPOOL_INIT, MEMPOOL_SLOPE, TERMINATION_STEPS, INTERARRIVAL_RATE
 
 class Environment(gym.Env):
 
@@ -27,10 +27,10 @@ class Environment(gym.Env):
         action_array = np.array([DATA_MAX, ENERGY_MAX]).repeat(NB_DEVICES)
 
         state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
-        state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET]
+        state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
 
         state_upper_bound = np.array([CPU_SHARES-1, CAPACITY_MAX-1, MEMPOOL_MAX]).repeat(NB_DEVICES)
-        state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET]
+        state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET + 1]
 
         self.observation_space = spaces.Box(low=state_lower_bound, high=state_upper_bound, dtype=np.int32)
         self.action_space = spaces.MultiDiscrete(action_array)
@@ -52,14 +52,14 @@ class Environment(gym.Env):
         self.confirm_probability = 0.0
         self.nb_waiting_blocks = 0
         self.DONE_FLAG = False
+        self.payment_per_episode = 0.0
 
         self.ACTION_PENALTY_EP = 0
 
         self.estimated_feerate = 0
-        self.delta_feerate = 0
 
         self.seed(123)
-        # self.reset()
+        self.reset()
 
     def state_transition(self, state, action):
         """
@@ -74,19 +74,19 @@ class Environment(gym.Env):
         SECOND_OFFSET = NB_DEVICES
         THIRD_OFFSET = 2 * NB_DEVICES
         # TODO: should be random each episode or each step ?
-        capacity_array = np.copy(state[SECOND_OFFSET:])
-        energy_array = np.copy(action[SECOND_OFFSET:])
+        capacity_array = np.copy(state[SECOND_OFFSET:THIRD_OFFSET])
+        energy_array = np.copy(action[SECOND_OFFSET:THIRD_OFFSET])
         charging_array = self.nprandom.poisson(1, size=len(energy_array))
-        # charging_array = self.nprandom.exponential(1.0, size=len(energy_array))
         cpu_shares_array = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
-        # cpu_shares_array = self.nprandom.rand(NB_DEVICES) * (CPU_SHARES-1)
         next_capacity_array = np.zeros(len(capacity_array), dtype=np.int32)
         # TODO: mempool's transition
+        mempool_state = self.nprandom.poisson(INTERARRIVAL_RATE, size=NB_DEVICES)
         # TODO: state trasition - should do transition when mismatch the constrain ?
         for i in range(len(next_capacity_array)):
             next_capacity_array[i] = min(capacity_array[i] - energy_array[i] + charging_array[i], CAPACITY_MAX-1)
 
-        next_state = np.array([cpu_shares_array, next_capacity_array], dtype=np.int32).flatten()
+        next_state = np.array([cpu_shares_array, next_capacity_array, mempool_state], dtype=np.int32).flatten()
+        next_state = next_state[:THIRD_OFFSET + 1]
 
         return next_state
 
@@ -134,71 +134,45 @@ class Environment(gym.Env):
         tau = 10 ** (-28)
         nu = 10 ** 10
         delta = 1
+        training_price = 0.1
 
         alpha_D = 3
         alpha_L = 2
         alpha_E = 1
-        REWARD_BASE = 0
+        alpha_I = 1
         REWARD_PENATY = 0.5
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
-        # energy = np.copy(action[self.ENERGY_OFFSET:])
-        # feerate = np.copy(action[self.FEERATE_OFFSET:])
+        mempool_state = int(np.copy(self.state[-1]))
+        payment = [data[k] * (training_price + np.log10(1 + mempool_state)) for k in range(len(data))]
 
         ENERGY_THRESOLD = (ENERGY_MAX-1) * NB_DEVICES
         DATA_THRESOLD = (DATA_MAX-1) * NB_DEVICES
         LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX-1) ** 1.5
+        PAYMENT_THRESLOD = (DATA_MAX - 1) * NB_DEVICES * (training_price + np.log10(1 + mempool_state))
 
         accumulated_data = np.sum(data)
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
-        # feerate_avg = np.average(feerate)
+        payment = np.sum(payment)
         # TODO : shaping reward function
         reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD \
-                                                                - alpha_L * latency / LATENCY_THRESOLD
+                 - alpha_L * latency / LATENCY_THRESOLD - alpha_I * payment / PAYMENT_THRESLOD
         # d = accumulated_data / DATA_THRESOLD
         # e = total_energy / ENERGY_THRESOLD
         # l = alpha_L * latency / LATENCY_THRESOLD
         # if d > 1.0 or e > 1.0 or l > 1.0:
         #     print('d: {}, e: {}, l: {}'.format(d, e, l))
-
-        reward += REWARD_BASE
-        # reward = reward ** 2
+        if payment / PAYMENT_THRESLOD > 1:
+            print('p: {}, p/P: {}'.format(payment, payment / PAYMENT_THRESLOD))
         if self.ACTION_PENALTY > 0:
             reward -= REWARD_PENATY * self.ACTION_PENALTY
 
         self.ACTION_PENALTY_EP += self.ACTION_PENALTY
-        current_block = self.state[-1]
-        current_block = np.int(current_block)
+        self.payment_per_episode += payment
         # TODO: should be max or min feerate ?
-        # probs = [0, 0]
-        # for k in range(20):
-        #     is_done = False
-        #     confirm_prob = self._get_confirm_prob(current_block, current_block + k, 0)
-        #     if confirm_prob >= 0.9:
-        #         # probs.append(current_block + k)
-        #         probs[0] = current_block + k
-        #         probs[1] = confirm_prob
-        #         # probs.append(confirm_prob)
-        #         is_done = True
-        #     if is_done:
-        #         break
-        #
-        # self.nb_waiting_blocks = probs[0]
-        # self.confirm_probability = probs[1]
-        # self.estimated_feerate = (self.nb_waiting_blocks - current_block) / 2
         # TODO: derive the reward for delta_feerate
-        # self.delta_feerate = np.abs(feerate_avg - self.estimated_feerate)
-
-        # reward -= self.delta_feerate
-        # reward clipping
-        # reward /= 11
-
-        # if reward > 0:
-        #     reward = 1
-        # else:
-        #     reward = 0
 
         return reward
 
@@ -291,8 +265,7 @@ class Environment(gym.Env):
         self.energy_per_episode += np.sum(energy)
         self.latency_per_episode += latency
         self.accumulated_data += np.sum(data)
-        # self.confirm_probability += self._get_confirm_prob(np.int(self.mempool_state),
-        #                                                   np.int(self.mempool_state + 1), np.max(feerate))
+
         # End of statistic
 
         # TODO: terminated condition ?
@@ -316,7 +289,7 @@ class Environment(gym.Env):
                     'waiting_blocks': self.nb_waiting_blocks,
                     'confirm_prob': self.confirm_probability,
                     'feerate_from_cdf': self.estimated_feerate,
-                    'delta_feerate': self.delta_feerate,
+                    'payment': self.payment_per_episode / self.step_counter,
                    },
             # export results to excel file
             self.writer.general_write(logs, self.episode_counter)
@@ -335,11 +308,9 @@ class Environment(gym.Env):
     def reset(self):
         cpu_shares_init = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
         capacity_init = self.nprandom.randint(CAPACITY_MAX, size=NB_DEVICES)
-        # cpu_shares_init = self.nprandom.rand(NB_DEVICES) * CPU_SHARES
-        # capacity_init = self.nprandom.rand(NB_DEVICES) * CAPACITY_MAX
-        mempool_init = np.full((NB_DEVICES, ), self.mempool_state)
-        state = np.array([cpu_shares_init, capacity_init]).flatten()
-        # state = state[:self.FEERATE_OFFSET]
+        mempool_init = np.full((NB_DEVICES, ), min(self.nprandom.poisson(INTERARRIVAL_RATE), MEMPOOL_MAX))
+        state = np.array([cpu_shares_init, capacity_init, mempool_init]).flatten()
+        state = state[:self.FEERATE_OFFSET + 1]
 
         self.mempool_state = state[-1]
         self.mempools.append(self.mempool_state)
@@ -362,6 +333,7 @@ class Environment(gym.Env):
         self.confirm_probability = 0.0
         self.accumulated_data = 0
         self.ACTION_PENALTY_EP = 0
+        self.payment_per_episode = 0.0
         # End of statistic
         return self.state
 
