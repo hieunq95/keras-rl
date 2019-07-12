@@ -17,15 +17,15 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 149
-NB_STEPS = 1100000
+TEST_ITERATOR = 162
+NB_STEPS = 1500000
 NB_TEST_EPISODES = 1000
 DECAY_EPSILON_END = 2000
 """
 Iteration = 142, charging ~ exponential(1.0), penalty = 2
 Iteration = 143, charging ~ exponential(1.0), penalty = 3
 Iteration = 144, charging ~ exponential(1.0), penalty = 1   state -> int32
-Iteration = 145, charging ~ exponential(1.0), penalty = 1
+Iteration = 150, charging ~ poisson(1), penalty = 1 * 5
 """
 
 mempool = []
@@ -34,7 +34,7 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-policy = MyEpsGreedy(env, 0.9, 0, DECAY_EPSILON_END, writer)
+policy = MyEpsGreedy(env, 0.9, 0.1, DECAY_EPSILON_END, writer)
 # policy = EpsGreedyQPolicy()
 processor = MyProcessor()
 
@@ -72,9 +72,9 @@ history = dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_epi
 print("****************************************"
       " End of training - switch to test" 
       "****************************************")
-dqn.test(env, nb_episodes=NB_TEST_EPISODES, visualize=False, nb_max_episode_steps=None)
+# dqn.test(env, nb_episodes=NB_TEST_EPISODES, visualize=False, nb_max_episode_steps=None)
 
 workbook.close()
-plt.plot(np.arange(0, len(mempool)), mempool)
+# plt.plot(np.arange(0, len(mempool)), mempool)
 # plt.savefig('./build/mempool-test-{}.png'.format(TEST_ITERATOR))
 # plt.show()

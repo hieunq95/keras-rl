@@ -107,7 +107,7 @@ class Environment(gym.Env):
             if cpu_cycles[k] != 0:
                 latency_array[k] = 10 ** 10 * data[k] / cpu_cycles[k]
 
-        latency = np.max(latency_array)
+        latency = np.amax(latency_array)
         # latency = np.average(latency_array)
         return latency
 
@@ -139,7 +139,7 @@ class Environment(gym.Env):
         alpha_L = 2
         alpha_E = 1
         REWARD_BASE = 0
-        REWARD_PENATY = 1
+        REWARD_PENATY = 0.5
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
@@ -157,8 +157,12 @@ class Environment(gym.Env):
         # TODO : shaping reward function
         reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD \
                                                                 - alpha_L * latency / LATENCY_THRESOLD
-        # print(alpha_D * accumulated_data / DATA_THRESOLD)
-        # reward *= 5
+        # d = accumulated_data / DATA_THRESOLD
+        # e = total_energy / ENERGY_THRESOLD
+        # l = alpha_L * latency / LATENCY_THRESOLD
+        # if d > 1.0 or e > 1.0 or l > 1.0:
+        #     print('d: {}, e: {}, l: {}'.format(d, e, l))
+
         reward += REWARD_BASE
         # reward = reward ** 2
         if self.ACTION_PENALTY > 0:
@@ -214,6 +218,8 @@ class Environment(gym.Env):
         for i in range(len(data)):
             if data[i] != 0 and energy[i] != 0:
                 cpu_cycles[i] = np.sqrt(1 * energy[i]) / np.sqrt((10 ** -18) * data[i])
+                # cpu_cycles[i] = 1 * energy[i] / ((10 ** (-18)) * data[i])
+                # cpu_cycles[i] = cpu_cycles[i] ** 0.5
             else:
                 cpu_cycles[i] = 0
 
@@ -250,7 +256,7 @@ class Environment(gym.Env):
             if data_array[i] == 0 or energy_array[i] == 0:
                 # energy_array[i] = 0
                 # data_array[i] = 0
-                self.ACTION_PENALTY += 1
+                self.ACTION_PENALTY += 2
 
         cpu_cyles_array = self._calculate_cpu_cycles(energy_array, data_array)
         new_energy_array = self._correct_action(cpu_cyles_array, cpushares_array, energy_array)
@@ -291,7 +297,7 @@ class Environment(gym.Env):
 
         # TODO: terminated condition ?
         # if self.step_counter == self.TERMINATION:
-        if self.accumulated_data >= 1500:
+        if self.accumulated_data >= 2000:
             # print('accumulated_data {}'.format(self.accumulated_data))
             done = True
             # For statistic only
