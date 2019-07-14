@@ -227,6 +227,7 @@ class Agent(object):
                     observation = None
                     episode_step = None
                     episode_reward = None
+                    
         except KeyboardInterrupt:
             # We catch keyboard interrupts here so that training can be be safely aborted.
             # This is so common that we've built this right into this function, which ensures that

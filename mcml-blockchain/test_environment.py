@@ -22,16 +22,17 @@ states = []
 
 # Test convert action
 
-for t in range(3000):
+for t in range(10000):
     action = env.action_space.sample()
+    # action = np.array([2, 2, 2, 2, 2, 2])
     next_state, reward, done, info = env.step(action)
     state = next_state
     mempool = state[-1]
     mempools.append(mempool)
     rewards.append(reward)
     # states.append(env.observation_space.sample()[2])
-    states.append(next_state[3])
-    actions.append(action[3])
+    states.append(next_state[2])
+    actions.append(action[2])
 
 # plt.plot(np.arange(0, len(rewards)), actions)
 
@@ -40,9 +41,8 @@ target1 = states
 target2 = actions
 target3 = rewards
 
-# target = [target1, target2]
-target = target3
-# hist = plt.hist([target1, target2])
+target = [target1, target2]
+# target = target3
 hist = plt.hist(target)
 print(hist[0], hist[1])
 total_apperance = np.sum(hist[0])
@@ -51,15 +51,12 @@ hist_percentive = np.copy(hist[0])
 for i in range(len(hist_percentive)):
     hist_percentive[i] /= total_apperance
 print(hist_percentive, np.sum(hist_percentive))
-
 plt.show()
 
 # plt.plot(np.arange(0, len(target)), target)
 # plt.show()
+total = []
+for i in range(6):
+    total.append(3* (4**i))
 
-# exponeltial = np.random.exponential(1.0, size=10000)
-# plt.hist(exponeltial)
-# plt.show()
-#
-# plt.plot(np.arange(0, len(exponeltial)), exponeltial)
-# plt.show()
+print(np.sum(total))
