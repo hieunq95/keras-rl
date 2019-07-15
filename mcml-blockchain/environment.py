@@ -136,7 +136,7 @@ class Environment(gym.Env):
         delta = 1
         training_price = 0.1
 
-        alpha_D = 3
+        alpha_D = 4
         alpha_L = 2
         alpha_E = 1
         alpha_I = 1
