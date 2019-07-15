@@ -275,7 +275,7 @@ class Environment(gym.Env):
 
         # TODO: terminated condition ?
         # if self.step_counter == self.TERMINATION:
-        if self.accumulated_data >= 1000:
+        if self.accumulated_data >= 2000:
             # print('accumulated_data {}'.format(self.accumulated_data))
             done = True
             # For statistic only

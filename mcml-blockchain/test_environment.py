@@ -31,8 +31,8 @@ for t in range(10000):
     mempools.append(mempool)
     rewards.append(reward)
     # states.append(env.observation_space.sample()[2])
-    states.append(next_state[2])
-    actions.append(action[2])
+    states.append(next_state[-1])
+    actions.append(action[-1])
 
 # plt.plot(np.arange(0, len(rewards)), actions)
 

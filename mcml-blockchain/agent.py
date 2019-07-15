@@ -17,10 +17,15 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
+<<<<<<< HEAD
 TEST_ITERATOR = 11
+=======
+TEST_ITERATOR = 169
+>>>>>>> 9f9a08f51057a0d24d29e02d1bc87e0f1053696f
 NB_STEPS = 1500000
 NB_TEST_EPISODES = 1000
-DECAY_EPSILON_END = 2000
+DECAY_EPSILON_END = 1000
+TARGET_MODEL_UPDATE = 1e-3  # hard or soft update
 """
 Iteration = 142, charging ~ exponential(1.0), penalty = 2
 Iteration = 143, charging ~ exponential(1.0), penalty = 3
@@ -48,21 +53,13 @@ model.add(Flatten(input_shape=(1,) + env.observation_space.shape)) # input
 model.add(Dense(32, activation='relu'))
 model.add(Dense(32, activation='relu'))
 model.add(Dense(32, activation='relu'))
-# model.add(Dense(64, activation='relu'))
 model.add(Dense(nb_actions, activation='linear'))
 
-# model.add(Activation('relu'))
-# model.add(Dense(32))
-# model.add(Activation('relu'))
-# model.add(Dense(32))
-# model.add(Activation('relu'))
-# model.add(Dense(nb_actions)) # output
-# model.add(Activation('linear'))
 print(model.summary())
 
-memory = SequentialMemory(limit=5000, window_length=1)
+memory = SequentialMemory(limit=50000, window_length=1)
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
-               target_model_update=1e-2, policy=policy,
+               target_model_update=TARGET_MODEL_UPDATE, policy=policy,
                enable_double_dqn=True, processor=processor)
 # TODO: what learning rate is efficient enough
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
@@ -70,8 +67,8 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 history = dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None)
 
 print("****************************************"
-      " End of training - switch to test" 
-      "****************************************")
+      " End of training {}-th - switch to test" 
+      "****************************************".format(TEST_ITERATOR))
 # dqn.test(env, nb_episodes=NB_TEST_EPISODES, visualize=False, nb_max_episode_steps=None)
 
 workbook.close()
