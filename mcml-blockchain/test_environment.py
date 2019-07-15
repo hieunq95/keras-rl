@@ -41,8 +41,8 @@ target1 = states
 target2 = actions
 target3 = rewards
 
-target = [target1, target2]
-# target = target3
+# target = [target1, target2]
+target = target3
 hist = plt.hist(target)
 print(hist[0], hist[1])
 total_apperance = np.sum(hist[0])

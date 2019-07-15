@@ -2,7 +2,7 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 
-TEST_TH = 12
+TEST_TH = 11
 MEMPOOL_TH = 71
 
 data_path = './build/results-{}.xlsx'.format(TEST_TH)
