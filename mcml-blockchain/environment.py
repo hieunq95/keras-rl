@@ -23,8 +23,8 @@ class Environment(gym.Env):
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
 
-        # action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX]).repeat(NB_DEVICES)
-        action_array = np.array([DATA_MAX, ENERGY_MAX]).repeat(NB_DEVICES)
+        action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX]).repeat(NB_DEVICES)
+        # action_array = np.array([DATA_MAX, ENERGY_MAX]).repeat(NB_DEVICES)
 
         state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
         state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
@@ -134,23 +134,27 @@ class Environment(gym.Env):
         tau = 10 ** (-28)
         nu = 10 ** 10
         delta = 1
-        training_price = 0.1
+        training_price = 0.2
 
         alpha_D = 4
         alpha_L = 2
         alpha_E = 1
-        alpha_I = 1
+        alpha_I = 2
         REWARD_PENATY = 0.5
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        confirm_fee = np.copy(action[self.FEERATE_OFFSET:])
+
         mempool_state = int(np.copy(self.state[-1]))
-        payment = [data[k] * (training_price + np.log10(1 + mempool_state)) for k in range(len(data))]
+        # payment = [data[k] * (training_price + np.log(1 + mempool_state)) for k in range(len(data))]
+        payment = [training_price * data[k] + confirm_fee[k] * np.log(1 + mempool_state) for k in range(len(data))]
 
         ENERGY_THRESOLD = (ENERGY_MAX-1) * NB_DEVICES
         DATA_THRESOLD = (DATA_MAX-1) * NB_DEVICES
         LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX-1) ** 1.5
-        PAYMENT_THRESLOD = (DATA_MAX - 1) * NB_DEVICES * (training_price + np.log10(1 + mempool_state))
+        # PAYMENT_THRESOLD = (DATA_MAX - 1) * NB_DEVICES * (training_price + np.log(1 + MEMPOOL_MAX))
+        PAYMENT_THRESOLD = NB_DEVICES * ((DATA_MAX - 1) * training_price + (FEERATE_MAX - 1) * np.log(1 + MEMPOOL_MAX))
 
         accumulated_data = np.sum(data)
         total_energy = np.sum(energy)
@@ -158,14 +162,14 @@ class Environment(gym.Env):
         payment = np.sum(payment)
         # TODO : shaping reward function
         reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD \
-                 - alpha_L * latency / LATENCY_THRESOLD - alpha_I * payment / PAYMENT_THRESLOD
+                 - alpha_L * latency / LATENCY_THRESOLD - alpha_I * payment / PAYMENT_THRESOLD
         # d = accumulated_data / DATA_THRESOLD
         # e = total_energy / ENERGY_THRESOLD
         # l = alpha_L * latency / LATENCY_THRESOLD
         # if d > 1.0 or e > 1.0 or l > 1.0:
         #     print('d: {}, e: {}, l: {}'.format(d, e, l))
-        if payment / PAYMENT_THRESLOD > 1:
-            print('p: {}, p/P: {}'.format(payment, payment / PAYMENT_THRESLOD))
+        # if payment / PAYMENT_THRESOLD > 1:
+        #     print('p: {}, p/P: {}'.format(payment, payment / PAYMENT_THRESOLD))
         if self.ACTION_PENALTY > 0:
             reward -= REWARD_PENATY * self.ACTION_PENALTY
 
@@ -219,6 +223,7 @@ class Environment(gym.Env):
         capacity_array = np.copy(state[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
         data_array = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy_array = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
+        confirm_fee_array = np.copy(action[self.FEERATE_OFFSET:])
         # TODO: correct the constrain, do not change the action, just count for a penalty of the action miss the constrain
         for i in range(len(energy_array)):
             # TODO: how to choose an action when energy required exceed the capacity
@@ -235,7 +240,7 @@ class Environment(gym.Env):
         cpu_cyles_array = self._calculate_cpu_cycles(energy_array, data_array)
         new_energy_array = self._correct_action(cpu_cyles_array, cpushares_array, energy_array)
 
-        corrected_action = np.array([data_array, new_energy_array]).flatten()
+        corrected_action = np.array([data_array, new_energy_array, confirm_fee_array]).flatten()
         return corrected_action
 
     def step(self, action):
@@ -270,7 +275,7 @@ class Environment(gym.Env):
 
         # TODO: terminated condition ?
         # if self.step_counter == self.TERMINATION:
-        if self.accumulated_data >= 2000:
+        if self.accumulated_data >= 1000:
             # print('accumulated_data {}'.format(self.accumulated_data))
             done = True
             # For statistic only
@@ -359,7 +364,7 @@ class MyProcessor(Processor):
         self.FEERATE_ORDER = FEERATE_MAX
 
         # self.ACTION_SIZE = 3 * NB_DEVICES
-        self.ACTION_SIZE = 2 * NB_DEVICES
+        self.ACTION_SIZE = 3 * NB_DEVICES
         self.DATA_OFFSET = 0
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
@@ -372,7 +377,7 @@ class MyProcessor(Processor):
 
             :return: action in array
             """
-        # print(action)
+        # print('pre-process action {}'.format(action))
         data_array, energy_array, feerate_array = [], [], []
         action_clone = np.copy(action)
 
@@ -382,26 +387,26 @@ class MyProcessor(Processor):
                 data_i = action_clone // divisor
                 action_clone -= data_i * divisor
                 data_array.append(data_i)
-            else:
+            # else:
+            #     divisor = self.ENERGY_ORDER ** (self.ACTION_SIZE - (i + 1))
+            #     energy_i = action_clone // divisor
+            #     action_clone -= energy_i * divisor
+            #     energy_array.append(energy_i)
+
+            elif i >= self.ENERGY_OFFSET and i < self.FEERATE_OFFSET:
                 divisor = self.ENERGY_ORDER ** (self.ACTION_SIZE - (i + 1))
                 energy_i = action_clone // divisor
                 action_clone -= energy_i * divisor
                 energy_array.append(energy_i)
 
-            # elif i >= self.ENERGY_OFFSET and i < self.FEERATE_OFFSET:
-            #     divisor = self.ENERGY_ORDER ** (self.ACTION_SIZE - (i + 1))
-            #     energy_i = action_clone // divisor
-            #     action_clone -= energy_i * divisor
-            #     energy_array.append(energy_i)
-            #
-            # elif i >= self.FEERATE_OFFSET:
-            #     divisor = self.FEERATE_ORDER ** (self.ACTION_SIZE - (i + 1))
-            #     feerate_i = action_clone // divisor
-            #     action_clone -= feerate_i * divisor
-            #     feerate_array.append(feerate_i)
+            elif i >= self.FEERATE_OFFSET:
+                divisor = self.FEERATE_ORDER ** (self.ACTION_SIZE - (i + 1))
+                feerate_i = action_clone // divisor
+                action_clone -= feerate_i * divisor
+                feerate_array.append(feerate_i)
         #TODO: is the q_values is sorted in the corrected order
 
-        processed_action = np.array([data_array, energy_array]).flatten()
+        processed_action = np.array([data_array, energy_array, feerate_array]).flatten()
         return processed_action
 
 

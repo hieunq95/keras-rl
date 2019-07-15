@@ -2,7 +2,7 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 
-TEST_TH = 163
+TEST_TH = 12
 MEMPOOL_TH = 71
 
 data_path = './build/results-{}.xlsx'.format(TEST_TH)
@@ -18,6 +18,7 @@ payment = df['Payment'].values
 
 energy_ewm = df['Energy'].ewm(span=100, adjust=True).mean()
 latency_ewm = df['Latency'].ewm(span=100, adjust=True).mean()
+payment_ewm = df['Payment'].ewm(span=100, adjust=True).mean()
 
 energy_plot = []
 energy_ewm_plot = []
@@ -26,6 +27,7 @@ latency_ewm_plot = []
 data_plot = []
 reward_plot = []
 payment_plot = []
+payment_ewm_plot = []
 
 
 for i in range(len(energy)):
@@ -49,6 +51,7 @@ for i in range(len(reward)):
 for i in range(len(payment)):
     if i % 2 == 0:
         payment_plot.append(payment[i])
+        payment_ewm_plot.append(payment_ewm[i])
 
 episodes = np.arange(0, len(energy_plot))
 
@@ -83,7 +86,9 @@ plt.xlabel('Episode')
 plt.savefig('./results/{}-reward.png'.format(TEST_TH))
 plt.show()
 
-plt.plot(episodes, payment_plot)
+plt.plot(episodes, payment_plot, label='Payment')
+plt.plot(episodes, payment_ewm_plot, label='Payment_EWM')
+plt.legend()
 plt.ylabel('Payment')
 plt.xlabel('Episode')
 plt.savefig('./results/{}-payment.png'.format(TEST_TH))
