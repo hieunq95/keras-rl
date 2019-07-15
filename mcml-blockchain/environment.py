@@ -136,8 +136,8 @@ class Environment(gym.Env):
         delta = 1
         training_price = 0.2
 
-        alpha_D = 4
-        alpha_L = 2
+        alpha_D = 5
+        alpha_L = 3
         alpha_E = 1
         alpha_I = 2
         REWARD_PENATY = 0.5
@@ -275,7 +275,7 @@ class Environment(gym.Env):
 
         # TODO: terminated condition ?
         # if self.step_counter == self.TERMINATION:
-        if self.accumulated_data >= 1000:
+        if self.accumulated_data >= 2000:
             # print('accumulated_data {}'.format(self.accumulated_data))
             done = True
             # For statistic only

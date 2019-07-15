@@ -1,7 +1,7 @@
 """
 Config paremeters for Machine crowd machine learning block chain
 """
-NB_DEVICES = 1
+NB_DEVICES = 2
 
 CPU_SHARES = 4
 CAPACITY_MAX = 4
@@ -15,7 +15,6 @@ MEMPOOL_INIT = 1
 MEMPOOL_SLOPE = 0.75
 #TODO: derive a function for feerate and the slope of mempool
 
-
-INTERARRIVAL_RATE = 3
+INTERARRIVAL_RATE = 1
 
 TERMINATION_STEPS = 400
