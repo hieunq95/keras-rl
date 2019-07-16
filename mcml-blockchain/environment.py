@@ -24,15 +24,6 @@ class Environment(gym.Env):
         self.FEERATE_OFFSET = 2 * NB_DEVICES
 
         action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX]).repeat(NB_DEVICES)
-        # action_array = np.array([DATA_MAX, ENERGY_MAX]).repeat(NB_DEVICES)
-
-        state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
-        state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
-
-        state_upper_bound = np.array([CPU_SHARES-1, CAPACITY_MAX-1, MEMPOOL_MAX]).repeat(NB_DEVICES)
-        state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET + 1]
-
-        self.observation_space = spaces.Box(low=state_lower_bound, high=state_upper_bound, dtype=np.int32)
         self.action_space = spaces.MultiDiscrete(action_array)
 
         self.TERMINATION = np.int(np.random.poisson(TERMINATION_STEPS))
@@ -275,7 +266,7 @@ class Environment(gym.Env):
 
         # TODO: terminated condition ?
         # if self.step_counter == self.TERMINATION:
-        if self.accumulated_data >= 2000:
+        if self.accumulated_data >= 1000:
             # print('accumulated_data {}'.format(self.accumulated_data))
             done = True
             # For statistic only
