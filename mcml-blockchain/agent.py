@@ -17,7 +17,7 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 170
+TEST_ITERATOR = 171
 NB_STEPS = 1500000
 NB_TEST_EPISODES = 1000
 DECAY_EPSILON_END = 1000
