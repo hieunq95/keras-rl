@@ -17,7 +17,7 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 171
+TEST_ITERATOR = 179
 NB_STEPS = 1500000
 NB_TEST_EPISODES = 1000
 DECAY_EPSILON_END = 1000
@@ -35,7 +35,7 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-policy = MyEpsGreedy(env, 0.9, 0.1, DECAY_EPSILON_END, writer)
+policy = MyEpsGreedy(env, 0.9, 0.05, DECAY_EPSILON_END, writer)
 # policy = EpsGreedyQPolicy()
 processor = MyProcessor()
 
@@ -52,6 +52,10 @@ model.add(Dense(32, activation='relu'))
 model.add(Dense(nb_actions, activation='linear'))
 
 print(model.summary())
+
+print("****************************************"
+      " Start of training {}-th " 
+      "****************************************".format(TEST_ITERATOR))
 
 memory = SequentialMemory(limit=50000, window_length=1)
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
