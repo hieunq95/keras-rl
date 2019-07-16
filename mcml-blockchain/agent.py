@@ -17,7 +17,7 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 169
+TEST_ITERATOR = 170
 NB_STEPS = 1500000
 NB_TEST_EPISODES = 1000
 DECAY_EPSILON_END = 1000
@@ -45,7 +45,7 @@ for i in env.action_space.nvec:
 
 print(env.action_space.nvec, nb_actions, env.observation_space)
 model = Sequential()
-model.add(Flatten(input_shape=(1,) + env.observation_space.shape)) # input
+model.add(Flatten(input_shape=(1,) + env.observation_space.shape))  #input
 model.add(Dense(32, activation='relu'))
 model.add(Dense(32, activation='relu'))
 model.add(Dense(32, activation='relu'))

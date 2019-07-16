@@ -128,7 +128,7 @@ class Environment(gym.Env):
         training_price = 0.2
 
         alpha_D = 5
-        alpha_L = 3
+        alpha_L = 2
         alpha_E = 1
         alpha_I = 2
         REWARD_PENATY = 0.5
