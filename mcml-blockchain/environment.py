@@ -81,6 +81,8 @@ class Environment(gym.Env):
         next_capacity_array = np.zeros(len(capacity_array), dtype=np.int32)
         # TODO: mempool's transition
         mempool_state = self.nprandom.poisson(INTERARRIVAL_RATE, size=NB_DEVICES)
+        for m in range(len(mempool_state)):
+            mempool_state[m] = min(mempool_state[m], MEMPOOL_MAX)
         # TODO: state trasition - should do transition when mismatch the constrain ?
         for i in range(len(next_capacity_array)):
             next_capacity_array[i] = min(capacity_array[i] - energy_array[i] + charging_array[i], CAPACITY_MAX-1)
@@ -274,8 +276,9 @@ class Environment(gym.Env):
         # End of statistic
 
         # TODO: terminated condition ?
+        DATA_THRESOLD = 1000 * NB_DEVICES
         # if self.step_counter == self.TERMINATION:
-        if self.accumulated_data >= 2000:
+        if self.accumulated_data >= DATA_THRESOLD:
             # print('accumulated_data {}'.format(self.accumulated_data))
             done = True
             # For statistic only
