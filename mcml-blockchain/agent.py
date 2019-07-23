@@ -17,11 +17,16 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
+<<<<<<< HEAD
 TEST_ITERATOR = 11
 
 NB_STEPS = 1500000
+=======
+TEST_ITERATOR = 199
+NB_STEPS = 2000000
+>>>>>>> 1c41e556612e851dce0ec5493bcd0a85dbd08e7f
 NB_TEST_EPISODES = 1000
-DECAY_EPSILON_END = 1000
+DECAY_EPSILON_END = 2000
 TARGET_MODEL_UPDATE = 1e-3  # hard or soft update
 """
 Iteration = 142, charging ~ exponential(1.0), penalty = 2
@@ -36,8 +41,8 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-policy = MyEpsGreedy(env, 0.9, 0.05, DECAY_EPSILON_END, writer)
-# policy = EpsGreedyQPolicy()
+# policy = MyEpsGreedy(env, 0.9, 0.05, DECAY_EPSILON_END, writer)
+policy = GreedyQPolicy()
 processor = MyProcessor()
 
 nb_actions = 1
