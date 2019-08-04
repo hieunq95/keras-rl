@@ -17,7 +17,7 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 199
+TEST_ITERATOR = 319
 NB_STEPS = 2000000
 
 NB_TEST_EPISODES = 1000
@@ -36,8 +36,8 @@ writer = MCMLWriter(workbook)
 
 env = Environment(mempool, writer)
 
-# policy = MyEpsGreedy(env, 0.9, 0.05, DECAY_EPSILON_END, writer)
-policy = GreedyQPolicy()
+policy = MyEpsGreedy(env, 0.9, 0.05, DECAY_EPSILON_END, writer)
+# policy = GreedyQPolicy()
 processor = MyProcessor()
 
 nb_actions = 1
