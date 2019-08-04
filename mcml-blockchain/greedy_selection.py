@@ -11,7 +11,7 @@ from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX
 
-TEST_ITERATOR = 206
+TEST_ITERATOR = 208
 NB_STEP = 1500000 * 2
 
 IS_GREEDY = 1
@@ -61,9 +61,12 @@ for e in range(NB_STEP):
                 data[i] = np.random.randint(low=data_min[i], high=DATA_MAX)
             else:
                 data[i] = 0
-        # TODO: choose action
+        # TODO: choose random action
         # action = np.array([data, energy, fee_rate]).flatten()
-        action = np.random.randint(low=0, high=ENERGY_MAX, size=6)
+        data = np.random.randint(0, DATA_MAX, size=NB_DEVICES)
+        energy = np.random.randint(0, ENERGY_MAX, size=NB_DEVICES)
+        action = np.array([data, energy, fee_rate]).flatten()
+
     else:
         action = env.action_sample
         state = env.state
@@ -75,13 +78,11 @@ for e in range(NB_STEP):
 
         for i in range(NB_DEVICES):
             energy_max = max(math.ceil(((MU * cpu_shares[i]) ** 2) * TAU * NU * data[i] / E_UNIT) - 1, 0)
-            energy[i] = np.random.randint(low=0, high=ENERGY_MAX)
-            if energy[i] > energy_max:
-                energy[i] = min(energy_max, ENERGY_MAX - 1)
+            # energy[i] = np.random.randint(low=0, high=ENERGY_MAX)
 
-        #TODO: choose action
-        energy = np.random.randint(0, ENERGY_MAX, 2)
-        fee_rate = np.random.randint(0, FEERATE_MAX, 2)
+            energy[i] = min(energy_max, ENERGY_MAX - 1)
+
+        # TODO: choose greedy action
 
         action = np.array([data, energy, fee_rate]).flatten()
         # print(action)

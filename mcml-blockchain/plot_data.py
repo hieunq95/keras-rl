@@ -2,24 +2,15 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 
-<<<<<<< HEAD
-
-TEST_TH = 181
-MEMPOOL_TH = 71
-EWM_WINDOW = 50
-
-IS_GREEDY = 1
-=======
 """
 Results:
 results-random-201.xlsx
 results-greedy-201.xlsx
 results-195.xlsx
 """
->>>>>>> 1c41e556612e851dce0ec5493bcd0a85dbd08e7f
 
-RANDOM_TEST = './build/results-random-206.xlsx'
-GREEDY_TEST = './build/results-greedy-206.xlsx'
+RANDOM_TEST = './build/results-random-207.xlsx'
+GREEDY_TEST = './build/results-greedy-208.xlsx'
 DRL_TEST = './build/results-195.xlsx'
 
 EWM_WINDOW = 20
