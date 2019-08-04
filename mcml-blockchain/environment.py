@@ -9,7 +9,7 @@ from gym import spaces
 from gym.utils import seeding
 from rl.core import Processor
 from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MEMPOOL_INIT, \
-    MEMPOOL_SLOPE, TERMINATION_STEPS, INTERARRIVAL_RATE, LAMBDA, MIU
+    MEMPOOL_SLOPE, TERMINATION_STEPS, INTERARRIVAL_RATE, LAMBDA, MIU, MINING_RATE, SNR, W, d_fr, d_train, d_blk, L_wait, BLK_TIME_SCALE
 
 class Environment(gym.Env):
 
@@ -24,13 +24,13 @@ class Environment(gym.Env):
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
 
-        action_array = np.array([DATA_MAX, ENERGY_MAX, FEERATE_MAX]).repeat(NB_DEVICES)
-        # action_array = np.array([DATA_MAX, ENERGY_MAX]).repeat(NB_DEVICES)
+        action_array = np.array([DATA_MAX, ENERGY_MAX, MINING_RATE]).repeat(NB_DEVICES)
+        action_array = action_array[:self.FEERATE_OFFSET + 1]
 
         state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
         state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
-
-        state_upper_bound = np.array([CPU_SHARES-1, CAPACITY_MAX-1, MEMPOOL_MAX-1]).repeat(NB_DEVICES)
+        MEMPOOL_MAX_TEMP = max(np.random.geometric(1 - LAMBDA / (2 * MINING_RATE), size=10000))
+        state_upper_bound = np.array([CPU_SHARES-1, CAPACITY_MAX-1, MEMPOOL_MAX_TEMP-1]).repeat(NB_DEVICES)
         state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET + 1]
 
         self.observation_space = spaces.Box(low=state_lower_bound, high=state_upper_bound, dtype=np.int32)
@@ -79,15 +79,12 @@ class Environment(gym.Env):
         # TODO: should be random each episode or each step ?
         capacity_array = np.copy(state[SECOND_OFFSET:THIRD_OFFSET])
         energy_array = np.copy(action[SECOND_OFFSET:THIRD_OFFSET])
+        mining_rate = MINING_RATE + action[-1]
         charging_array = self.nprandom.poisson(1, size=len(energy_array))
         cpu_shares_array = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
         next_capacity_array = np.zeros(len(capacity_array), dtype=np.int32)
-        # TODO: mempool's transition
-        # mempool_state = self.nprandom.poisson(INTERARRIVAL_RATE, size=NB_DEVICES)
         # test with geometric distribution
-        mempool_state = self.nprandom.geometric(1 - LAMBDA / MIU, size=NB_DEVICES)
-        for m in range(len(mempool_state)):
-            mempool_state[m] = min(mempool_state[m], MEMPOOL_MAX)
+        mempool_state = self.nprandom.geometric(1 - LAMBDA / mining_rate, size=NB_DEVICES)
         # TODO: state trasition - should do transition when mismatch the constrain ?
         for i in range(len(next_capacity_array)):
             next_capacity_array[i] = min(capacity_array[i] - energy_array[i] + charging_array[i], CAPACITY_MAX-1)
@@ -99,12 +96,29 @@ class Environment(gym.Env):
 
     def calculate_latency(self, action):
         """
-        Calculate traning latency
+        Calculate total latency as follow:
+
+        - L_{total} = L_{tr} + L_{tx} + L_{blk}, where
+
+             L_tr = max(nu * d_i / f')
+
+             L_tx = L_dn + L_up_blk + L_up_sv
+                 = d_fr / (W_dn * log_2(1+SNR_dn)) + d_tr / (W_up_blk * log_2(1+SNR_up_blk)) + d_blk / (W_up_sv * log_2(1+SNR_up_sv))
+
+             L_blk = L_cross + L_res + L_bp
+                = (L_wait - (L_tr + L_up_blk)) + Exp(1/(mu - lambda)) + L_bp
+
         :param action: Taken action
 
         :return: Latency of the training step
         """
         # print('calculate_latency: action {}'.format(action))
+        channel_capacity = W * math.log2(1 + SNR)
+        l_tx = (d_fr + d_train + d_blk) / channel_capacity
+        # for simplicity, we assume L_cross = L_bp = L_wait
+        mining_rate = MINING_RATE + action[-1]
+        l_blk = 2 * L_wait + BLK_TIME_SCALE * self.nprandom.exponential(1 / (mining_rate - LAMBDA))
+
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
         # energy = np.copy(action[self.ENERGY_OFFSET:])
@@ -115,8 +129,10 @@ class Environment(gym.Env):
             if cpu_cycles[k] != 0:
                 latency_array[k] = 10 ** 10 * data[k] / cpu_cycles[k]
 
-        latency = np.amax(latency_array)
+        l_tr = np.amax(latency_array)
 
+        latency = l_tx + l_tr + l_blk
+        # print('l_tx {}, l_tr {}, l_blk {}, L {}'.format(l_tx, l_tr, l_blk, latency))
         return latency
 
     def _get_confirm_prob(self, x, n, r):
@@ -143,6 +159,7 @@ class Environment(gym.Env):
         nu = 10 ** 10
         delta = 1
         training_price = 0.2
+        blk_price = 2
 
         alpha_D = 5
         alpha_L = 3
@@ -152,29 +169,23 @@ class Environment(gym.Env):
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
-        confirm_fee = np.copy(action[self.FEERATE_OFFSET:])
+        mining_rate = MINING_RATE + action[-1]
+        mempool_max_temp = max(self.nprandom.geometric(1 - (LAMBDA / mining_rate), size=10000))
 
-        mempool_state = int(np.copy(self.state[-1]))
-        # payment = [data[k] * (training_price + np.log(1 + mempool_state)) for k in range(len(data))]
-        payment = [training_price * data[k] + confirm_fee[k] * np.log(1 + mempool_state) for k in range(len(data))]
+        mempool_state = self.state[-1]
+        payment = [training_price * data[k] + blk_price * np.log(1 + mempool_state) for k in range(len(data))]
 
         ENERGY_THRESOLD = (ENERGY_MAX-1) * NB_DEVICES
         DATA_THRESOLD = (DATA_MAX-1) * NB_DEVICES
-        LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX-1) ** 1.5
-        # PAYMENT_THRESOLD = (DATA_MAX - 1) * NB_DEVICES * (training_price + np.log(1 + MEMPOOL_MAX))
-        PAYMENT_THRESOLD = NB_DEVICES * ((DATA_MAX - 1) * training_price + (FEERATE_MAX - 1) * np.log(1 + MEMPOOL_MAX))
 
+        PAYMENT_THRESOLD = NB_DEVICES * ((DATA_MAX - 1) * training_price + blk_price * np.log(1 + mempool_max_temp))
+        LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX - 1) ** 1.5
+        l_tx = (d_fr + d_train + d_blk) / (W * math.log2(1 + SNR))
+        LATENCY_THRESOLD += 2 * L_wait + l_tx + BLK_TIME_SCALE * max(self.nprandom.exponential(1 / (mining_rate - LAMBDA), 1000))
         accumulated_data = np.sum(data)
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
         payment = np.sum(payment)
-
-        # TODO: add queue delay
-        # print('l: {}, L: {}'.format(latency, LATENCY_THRESOLD))
-        response_time = self.nprandom.exponential(1 / (MIU - LAMBDA), size=1000)
-        latency += response_time[0]
-        LATENCY_THRESOLD += max(response_time)
-        # print('l_q: {}, L_q: {}'.format(latency, LATENCY_THRESOLD))
 
         # TODO : shaping reward function
         reward = alpha_D * accumulated_data / DATA_THRESOLD - alpha_E * total_energy / ENERGY_THRESOLD \
@@ -228,8 +239,7 @@ class Environment(gym.Env):
 
         - if cpu_cycle_required > u * cpu_shares, then let self.ACTION_PENALTY = number_of_mismatch_actions to notice agent should not make any state transition for this device and get a penalty
 
-        :param data_array:
-        :param energy_array:
+        :param action:
         :return: corrected action
         """
         state = self.state
@@ -238,7 +248,8 @@ class Environment(gym.Env):
         capacity_array = np.copy(state[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
         data_array = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy_array = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
-        confirm_fee_array = np.copy(action[self.FEERATE_OFFSET:])
+        mining_rate = MINING_RATE + action[-1]
+        mining_array = np.full(NB_DEVICES, mining_rate, dtype=int)
         # TODO: correct the constrain, do not change the action, just count for a penalty of the action miss the constrain
         for i in range(len(energy_array)):
             # TODO: how to choose an action when energy required exceed the capacity
@@ -255,7 +266,8 @@ class Environment(gym.Env):
         cpu_cyles_array = self._calculate_cpu_cycles(energy_array, data_array)
         new_energy_array = self._correct_action(cpu_cyles_array, cpushares_array, energy_array)
 
-        corrected_action = np.array([data_array, new_energy_array, confirm_fee_array]).flatten()
+        corrected_action = np.array([data_array, new_energy_array, mining_array]).flatten()
+        corrected_action = corrected_action[:self.FEERATE_OFFSET+1]
         return corrected_action
 
     def step(self, action):
@@ -308,9 +320,9 @@ class Environment(gym.Env):
                     'training_data_mean': self.accumulated_data / self.step_counter,
                     'action_penalty': self.ACTION_PENALTY_EP / self.step_counter,
                     'mempool_state': self.mempool_state,
-                    'waiting_blocks': self.nb_waiting_blocks,
+                    'waiting_blocks': 0,
                     'confirm_prob': self.confirm_probability,
-                    'feerate_from_cdf': self.estimated_feerate,
+                    'feerate_from_cdf': 0,
                     'payment': self.payment_per_episode / self.step_counter,
                    },
             # export results to excel file
@@ -330,7 +342,8 @@ class Environment(gym.Env):
     def reset(self):
         cpu_shares_init = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
         capacity_init = self.nprandom.randint(CAPACITY_MAX, size=NB_DEVICES)
-        mempool_init = np.full((NB_DEVICES, ), min(self.nprandom.poisson(LAMBDA), MEMPOOL_MAX))
+        mining_rate = MINING_RATE + self.action_sample[-1]
+        mempool_init = self.nprandom.geometric(1 - LAMBDA / mining_rate, size=NB_DEVICES)
         state = np.array([cpu_shares_init, capacity_init, mempool_init]).flatten()
         state = state[:self.FEERATE_OFFSET + 1]
 
@@ -380,10 +393,10 @@ class MyProcessor(Processor):
         # TODO: check order of converter
         self.DATA_ORDER = DATA_MAX
         self.ENERGY_ORDER = ENERGY_MAX
-        self.FEERATE_ORDER = FEERATE_MAX
+        self.FEERATE_ORDER = MINING_RATE
 
         # self.ACTION_SIZE = 3 * NB_DEVICES
-        self.ACTION_SIZE = 3 * NB_DEVICES
+        self.ACTION_SIZE = 2 * NB_DEVICES + 1
         self.DATA_OFFSET = 0
         self.ENERGY_OFFSET = NB_DEVICES
         self.FEERATE_OFFSET = 2 * NB_DEVICES
@@ -423,9 +436,12 @@ class MyProcessor(Processor):
                 feerate_i = action_clone // divisor
                 action_clone -= feerate_i * divisor
                 feerate_array.append(feerate_i)
-        #TODO: is the q_values is sorted in the corrected order
+        #TODO: broadcast array
+        mining_array = np.full(NB_DEVICES, feerate_array[0])
 
-        processed_action = np.array([data_array, energy_array, feerate_array]).flatten()
+        processed_action = np.array([data_array, energy_array, mining_array]).flatten()
+        processed_action = processed_action[:self.FEERATE_OFFSET+1]
+        # print('processed action {}'.format(processed_action))
         return processed_action
 
 

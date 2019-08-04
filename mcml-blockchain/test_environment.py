@@ -43,7 +43,9 @@ target3 = rewards
 
 # target = [target1, target2]
 target = target3
+# target = np.random.exponential(0.2, 10000)
 hist = plt.hist(target)
+#print(target)
 print(hist[0], hist[1])
 total_apperance = np.sum(hist[0])
 hist_percentive = np.copy(hist[0])
