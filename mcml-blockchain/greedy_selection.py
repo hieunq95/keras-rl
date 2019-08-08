@@ -12,10 +12,10 @@ from writer_v1 import MCMLWriter
 from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MINING_RATE
 
 
-TEST_ITERATOR = 216
+TEST_ITERATOR = 217
 NB_STEP = 1500000 * 2
 
-IS_GREEDY = 1
+IS_GREEDY = 0
 
 if IS_GREEDY:
     workbook = xlsxwriter.Workbook('./build/results-greedy-{}.xlsx'.format(TEST_ITERATOR))

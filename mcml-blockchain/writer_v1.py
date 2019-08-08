@@ -20,6 +20,8 @@ class MCMLWriter():
         self.worksheet1.write('K1', 'Waiting blocks', bold)
         self.worksheet1.write('L1', 'Estimated feerate', bold)
         self.worksheet1.write('M1', 'Payment', bold)
+        self.worksheet1.write('N1', 'Training_data_mean_1', bold)
+        self.worksheet1.write('O1', 'Training_data_mean_2', bold)
 
         self.worksheet2 = workbook.add_worksheet()
         self.worksheet2.write('A1', 'Episode', bold)
@@ -52,6 +54,8 @@ class MCMLWriter():
         self.worksheet1.write(episode, 10, info.get('waiting_blocks'))
         self.worksheet1.write(episode, 11, info.get('feerate_from_cdf'))
         self.worksheet1.write(episode, 12, info.get('payment'))
+        self.worksheet1.write(episode, 13, info.get('training_data_mean_1'))
+        self.worksheet1.write(episode, 14, info.get('training_data_mean_2'))
 
     def epsilon_write(self, logs, episode):
         """

@@ -9,30 +9,41 @@ results-greedy-201.xlsx
 results-303.xlsx
 """
 
-RANDOM_TEST = './build/results-random-216.xlsx'
-GREEDY_TEST = './build/results-greedy-216.xlsx'
-DRL_TEST = './build/results-318.xlsx'
-# GREEDY_TEST = './build/results-317.xlsx'
+RANDOM_TEST = './build/results-random-217.xlsx'
+GREEDY_TEST = './build/results-greedy-217.xlsx'
+DRL_TEST = './build/results-332.xlsx'
+DATA_Q1 = './build/results-327.xlsx'
+DATA_Q2 = './build/results-329.xlsx'
+DATA_Q3 = './build/results-330.xlsx'
+DATA_Q4 = './build/results-331.xlsx'
 
-EWM_WINDOW = 10
+EWM_WINDOW = 2
 TEST_TH = 314
 RANGE = 4000
-
-# MEMPOOL_TH = 71
-#
-# IS_GREEDY = 1
-#
-# if IS_GREEDY == 0:
-#     data_path = './build/results-random-{}.xlsx'.format(TEST_TH)
-# elif IS_GREEDY == 1:
-#     data_path = './build/results-greedy-{}.xlsx'.format(TEST_TH)
-# else:
-#     data_path = './build/results-{}.xlsx'.format(TEST_TH)
-# mempool_path = './build/results-{}.xlsx'.format(MEMPOOL_TH)
 
 df = pandas.read_excel(DRL_TEST)
 df_random = pandas.read_excel(RANDOM_TEST)
 df_greedy = pandas.read_excel(GREEDY_TEST)
+
+df_data1 = pandas.read_excel(DATA_Q1)
+df_data2 = pandas.read_excel(DATA_Q2)
+df_data3 = pandas.read_excel(DATA_Q3)
+df_data4 = pandas.read_excel(DATA_Q4)
+
+data_q1_mean = [np.mean(df_data1['Training_data_mean_1'].values[3000:4000]), np.mean(df_data1['Training_data_mean_2'].values[3000:4000])]
+data_q2_mean = [np.mean(df_data2['Training_data_mean_1'].values[3000:4000]), np.mean(df_data2['Training_data_mean_2'].values[3000:4000])]
+data_q3_mean = [np.mean(df_data3['Training_data_mean_1'].values[3000:4000]), np.mean(df_data3['Training_data_mean_2'].values[3000:4000])]
+data_q4_mean = [np.mean(df_data4['Training_data_mean_1'].values[3000:4000]), np.mean(df_data4['Training_data_mean_2'].values[3000:4000])]
+
+print(data_q1_mean, data_q2_mean, data_q3_mean, data_q4_mean)
+plt.plot(np.array([1, 2, 3, 4]), np.array([data_q1_mean[0], data_q2_mean[0], data_q3_mean[0], data_q4_mean[0]]), 'b-*', label='Device-1')
+plt.plot(np.array([1, 2, 3, 4]), np.array([data_q1_mean[1], data_q2_mean[1], data_q3_mean[1], data_q4_mean[1]]), 'r-^', label='Device-2')
+plt.xlabel('Data quality')
+plt.ylabel('Mean data training value')
+plt.ylim([2.5, 3.0])
+plt.legend()
+plt.savefig('./results/data-quality-final.png')
+plt.show()
 
 #get the values for a given column
 energy = df['Energy'].values
@@ -42,18 +53,18 @@ reward = df['Total_reward'].values
 payment = df['Payment'].values
 
 energy_greedy = df_greedy['Energy'].ewm(EWM_WINDOW, adjust=False).mean()
-latency_greedy = df_greedy['Latency'].ewm(EWM_WINDOW / 5, adjust=False).mean()
+latency_greedy = df_greedy['Latency'].ewm(EWM_WINDOW , adjust=False).mean()
 data_greedy = df_greedy['Training_data_mean'].ewm(EWM_WINDOW, adjust=False).mean()
 reward_greedy = df_greedy['Total_reward'].ewm(EWM_WINDOW, adjust=False).mean()
 payment_greedy = df_greedy['Payment'].ewm(EWM_WINDOW, adjust=False).mean()
 
 energy_random = df_random['Energy'].ewm(EWM_WINDOW, adjust=False).mean()
-latency_random = df_random['Latency'].ewm(EWM_WINDOW / 5, adjust=False).mean()
+latency_random = df_random['Latency'].ewm(EWM_WINDOW, adjust=False).mean()
 data_random = df_random['Training_data_mean'].ewm(EWM_WINDOW, adjust=False).mean()
 reward_random = df_random['Total_reward'].ewm(EWM_WINDOW, adjust=False).mean()
 payment_random = df_random['Payment'].ewm(EWM_WINDOW, adjust=False).mean()
 
-energy_ewm = df['Energy'].ewm(span=EWM_WINDOW, adjust=False).mean()
+energy_ewm = df['Energy'].ewm(span=EWM_WINDOW * 4, adjust=False).mean()
 latency_ewm = df['Latency'].ewm(span=EWM_WINDOW, adjust=False).mean()
 payment_ewm = df['Payment'].ewm(span=EWM_WINDOW, adjust=False).mean()
 data_ewm = df['Training_data_mean'].ewm(span=EWM_WINDOW, adjust=False).mean()

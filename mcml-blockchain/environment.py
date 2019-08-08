@@ -29,7 +29,7 @@ class Environment(gym.Env):
 
         state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
         state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
-        MEMPOOL_MAX_TEMP = max(np.random.geometric(1 - LAMBDA / (MINING_RATE + MIU), size=10000))
+        MEMPOOL_MAX_TEMP = max(np.random.geometric(1 - LAMBDA / (MINING_RATE - 1 + MIU), size=10000))
         state_upper_bound = np.array([CPU_SHARES-1, CAPACITY_MAX-1, MEMPOOL_MAX_TEMP-1]).repeat(NB_DEVICES)
         state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET + 1]
 
@@ -61,6 +61,9 @@ class Environment(gym.Env):
 
         self.action_sample = self.action_space.sample()
         self.payment_array = []
+
+        self.accumulated_data_1 = 0
+        self.accumulated_data_2 = 0
 
         self.seed(123)
         self.reset()
@@ -159,10 +162,12 @@ class Environment(gym.Env):
         tau = 10 ** (-28)
         nu = 10 ** 10
         delta = 1
-        training_price = 1
-        blk_price = 1
+        training_price = 0.2
+        blk_price = 0.8
+        data_qualities = np.full(shape=NB_DEVICES, fill_value=1)  # 2 devices
+        data_qualities[0] = 1
 
-        alpha_D = 5
+        alpha_D = 10
         alpha_L = 3
         alpha_E = 1
         alpha_I = 2
@@ -171,19 +176,20 @@ class Environment(gym.Env):
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
         energy = np.copy(action[self.ENERGY_OFFSET:self.FEERATE_OFFSET])
         mining_rate = MIU + action[-1]
-        mempool_max_temp = max(self.nprandom.geometric(1 - (LAMBDA / mining_rate), size=10000))
+        mempool_max_temp = min(self.nprandom.geometric(1 - (LAMBDA / mining_rate), size=10000))
 
         mempool_state = self.mempool_state
-        payment = [training_price * data[k] + blk_price * np.log(1 + mempool_state) for k in range(len(data))]
+        # TODO: choose a payment function
+        payment = [training_price * data[k] + blk_price / mempool_state for k in range(len(data))]
 
         ENERGY_THRESOLD = (ENERGY_MAX-1) * NB_DEVICES
         DATA_THRESOLD = (DATA_MAX-1) * NB_DEVICES
 
-        PAYMENT_THRESOLD = NB_DEVICES * ((DATA_MAX - 1) * training_price + blk_price * np.log(1 + mempool_max_temp))
+        PAYMENT_THRESOLD = NB_DEVICES * ((DATA_MAX - 1) * training_price + blk_price / mempool_max_temp)
         LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX - 1) ** 1.5
         l_tx = (d_fr + d_train + d_blk) / (W * math.log2(1 + SNR))
         LATENCY_THRESOLD += 2 * L_wait + l_tx + BLK_TIME_SCALE * max(self.nprandom.exponential(1 / (mining_rate - LAMBDA), 1000))
-        accumulated_data = np.sum(data)
+        accumulated_data = np.sum([data_qualities[k] * data[k] for k in range(NB_DEVICES)]) / np.sum(data_qualities)
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
         payment = np.sum(payment)
@@ -303,6 +309,8 @@ class Environment(gym.Env):
         self.energy_per_episode += np.sum(energy)
         self.latency_per_episode += latency
         self.accumulated_data += np.sum(data)
+        self.accumulated_data_1 += data[0]
+        self.accumulated_data_2 += data[1]
 
         # End of statistic
 
@@ -329,6 +337,8 @@ class Environment(gym.Env):
                     'confirm_prob': self.confirm_probability,
                     'feerate_from_cdf': 0,
                     'payment': self.payment_per_episode / self.step_counter,
+                    'training_data_mean_1': self.accumulated_data_1 / self.step_counter,
+                    'training_data_mean_2': self.accumulated_data_2 / self.step_counter,
                    },
             # export results to excel file
             self.writer.general_write(logs, self.episode_counter)
@@ -374,6 +384,8 @@ class Environment(gym.Env):
         self.accumulated_data = 0
         self.ACTION_PENALTY_EP = 0
         self.payment_per_episode = 0.0
+        self.accumulated_data_1 = 0
+        self.accumulated_data_2 = 0
         # End of statistic
 
         self.action_sample = self.action_space.sample()

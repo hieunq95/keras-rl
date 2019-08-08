@@ -133,4 +133,38 @@ DECAY_EPSILON_END = 2000 / 0.9 - 0.05
     blk_price = 1, training_price = 1
     LAMBDA = 3
     mining_rate = MIU + action[-1]
+216:
+    Greedy, Random
+320:
+   blk_price = 0.2, training_price = 1
+321:
+   blk_price = 0.2, training_price = 2
+322:
+    blk_price = 0.8, training_price = 0.2
+    I ~ 1 / log(1+m)
+    NB_DEVICES = 1
+323: 
+    NB_DEVICES = 2
+324:
+    NB_DEVICES = 1
+    blk_price = 1, training_price = 0
+325, 326, 327, 328:
+    NB_DEVICES = 2
+    blk_price = 0.8, training_price = 0.2
+    data_qualities = [1, 1]
+    LAMBDA = 1, 2, 3, 4
+329, 330, 331:
+    NB_DEVICES = 2
+    data_qualities = [2, 1] [3, 1] [4, 1]
+    LAMBDA = 3
+217:
+    NB_DEVICES = 2
+    LAMBDA = 1
+    data_qualities = [1, 1]
+    greedy, random
+332:
+    NB_DEVICES = 2
+    data_qualities = [1, 1]
+    LAMBDA = 3
+    I = psi1 * d_i + psi2 * m
 """
