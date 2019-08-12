@@ -1,5 +1,6 @@
 # Solving frozen-lake using Q-learning
 # @author: Hieu Nguyen
+#  https://www.learndatasci.com/tutorials/reinforcement-q-learning-scratch-python-openai-gym/
 
 import numpy as np
 import gym
