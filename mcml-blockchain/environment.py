@@ -29,7 +29,8 @@ class Environment(gym.Env):
 
         state_lower_bound = np.array([0, 0, MEMPOOL_INIT]).repeat(NB_DEVICES)
         state_lower_bound = state_lower_bound[:self.FEERATE_OFFSET + 1]
-        MEMPOOL_MAX_TEMP = max(np.random.geometric(1 - LAMBDA / (MINING_RATE - 1 + MIU), size=10000))
+        # MEMPOOL_MAX_TEMP = max(np.random.geometric(1 - LAMBDA / (MINING_RATE - 1 + MIU), size=10000))
+        MEMPOOL_MAX_TEMP = MEMPOOL_MAX
         state_upper_bound = np.array([CPU_SHARES-1, CAPACITY_MAX-1, MEMPOOL_MAX_TEMP-1]).repeat(NB_DEVICES)
         state_upper_bound = state_upper_bound[:self.FEERATE_OFFSET + 1]
 
@@ -358,7 +359,8 @@ class Environment(gym.Env):
         cpu_shares_init = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
         capacity_init = self.nprandom.randint(CAPACITY_MAX, size=NB_DEVICES)
         mining_rate = MIU + self.action_sample[-1]
-        mempool_init = self.nprandom.geometric(1 - LAMBDA / mining_rate, size=NB_DEVICES)
+        # mempool_init = self.nprandom.geometric(1 - LAMBDA / mining_rate, size=NB_DEVICES)
+        mempool_init = np.full(NB_DEVICES, MEMPOOL_INIT)
         state = np.array([cpu_shares_init, capacity_init, mempool_init]).flatten()
         state = state[:self.FEERATE_OFFSET + 1]
 
