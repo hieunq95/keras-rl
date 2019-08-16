@@ -9,10 +9,11 @@ results-greedy-201.xlsx
 results-303.xlsx
 """
 
-RANDOM_TEST = './build/results-random-217.xlsx'
-GREEDY_TEST = './build/results-greedy-217.xlsx'
-DRL_TEST = './build/results-332.xlsx'
-DATA_Q1 = './build/results-327.xlsx'
+RANDOM_TEST = './build/results-random-1.xlsx'
+GREEDY_TEST = './build/results-greedy-1.xlsx'
+DRL_TEST = './build/results-1.xlsx'
+Q_LEARNING_TEST = './build/q_learning-result-2.xlsx'
+DATA_Q1 = './build/results-329.xlsx'
 DATA_Q2 = './build/results-329.xlsx'
 DATA_Q3 = './build/results-330.xlsx'
 DATA_Q4 = './build/results-331.xlsx'
@@ -22,6 +23,7 @@ TEST_TH = 314
 RANGE = 4000
 
 df = pandas.read_excel(DRL_TEST)
+df_qlearning = pandas.read_excel(Q_LEARNING_TEST)
 df_random = pandas.read_excel(RANDOM_TEST)
 df_greedy = pandas.read_excel(GREEDY_TEST)
 
@@ -52,8 +54,14 @@ data = df['Training_data_mean'].values
 reward = df['Total_reward'].values
 payment = df['Payment'].values
 
+energy_q = df_qlearning['Energy'].ewm(EWM_WINDOW, adjust=False).mean()
+latency_q = df_qlearning['Latency'].ewm(EWM_WINDOW, adjust=False).mean()
+data_q = df_qlearning['Training_data_mean'].ewm(EWM_WINDOW, adjust=False).mean()
+reward_q = df_qlearning['Total_reward'].ewm(EWM_WINDOW, adjust=False).mean()
+payment_q = df_qlearning['Payment'].ewm(EWM_WINDOW, adjust=False).mean()
+
 energy_greedy = df_greedy['Energy'].ewm(EWM_WINDOW, adjust=False).mean()
-latency_greedy = df_greedy['Latency'].ewm(EWM_WINDOW , adjust=False).mean()
+latency_greedy = df_greedy['Latency'].ewm(EWM_WINDOW, adjust=False).mean()
 data_greedy = df_greedy['Training_data_mean'].ewm(EWM_WINDOW, adjust=False).mean()
 reward_greedy = df_greedy['Total_reward'].ewm(EWM_WINDOW, adjust=False).mean()
 payment_greedy = df_greedy['Payment'].ewm(EWM_WINDOW, adjust=False).mean()
@@ -64,7 +72,7 @@ data_random = df_random['Training_data_mean'].ewm(EWM_WINDOW, adjust=False).mean
 reward_random = df_random['Total_reward'].ewm(EWM_WINDOW, adjust=False).mean()
 payment_random = df_random['Payment'].ewm(EWM_WINDOW, adjust=False).mean()
 
-energy_ewm = df['Energy'].ewm(span=EWM_WINDOW * 4, adjust=False).mean()
+energy_ewm = df['Energy'].ewm(span=EWM_WINDOW * 10, adjust=False).mean()
 latency_ewm = df['Latency'].ewm(span=EWM_WINDOW, adjust=False).mean()
 payment_ewm = df['Payment'].ewm(span=EWM_WINDOW, adjust=False).mean()
 data_ewm = df['Training_data_mean'].ewm(span=EWM_WINDOW, adjust=False).mean()
@@ -80,6 +88,11 @@ reward_plot = []
 reward_ewm_plot = []
 payment_plot = []
 payment_ewm_plot = []
+
+energy_q_plot = []
+latency_q_plot = []
+payment_q_plot = []
+reward_q_plot = []
 
 energy_random_plot = []
 latency_random_plot = []
@@ -97,6 +110,11 @@ for i in range(RANGE):
     latency_ewm_plot.append(latency_ewm[i])
     payment_ewm_plot.append(payment_ewm[i])
 
+    reward_q_plot.append(reward_q[i])
+    energy_q_plot.append(energy_q[i])
+    latency_q_plot.append(latency_q[i])
+    payment_q_plot.append(payment_q[i])
+
     energy_random_plot.append(energy_random[i])
     latency_random_plot.append(latency_random[i])
     payment_random_plot.append(payment_random[i])
@@ -111,6 +129,7 @@ for i in range(RANGE):
 episodes = np.arange(0, RANGE)
 
 plt.plot(episodes, reward_ewm_plot, label='DRL')
+plt.plot(episodes, reward_q_plot, label='Q-Learning')
 plt.plot(episodes, reward_greedy_plot, label='Greedy')
 plt.plot(episodes, reward_random_plot, label='Random')
 plt.xlabel('Episode')
@@ -120,6 +139,7 @@ plt.savefig('./results/reward-final.png')
 plt.show()
 
 plt.plot(episodes, energy_ewm_plot, label='DRL')
+plt.plot(episodes, energy_q_plot, label='Q-Learning')
 plt.plot(episodes, energy_random_plot, label='Random')
 plt.plot(episodes, energy_greedy_plot, label='Greedy')
 plt.legend()
@@ -129,6 +149,7 @@ plt.savefig('./results/energy-final.png')
 plt.show()
 
 plt.plot(episodes, latency_ewm_plot, label='DRL')
+plt.plot(episodes, latency_q_plot, label='Q-Learning')
 plt.plot(episodes, latency_random_plot, label='Random')
 plt.plot(episodes, latency_greedy_plot, label='Greedy')
 plt.legend()
@@ -138,6 +159,7 @@ plt.savefig('./results/latency-final.png')
 plt.show()
 
 plt.plot(episodes, payment_ewm_plot, label='DRL')
+plt.plot(episodes, payment_q_plot, label='Q-Learning')
 plt.plot(episodes, payment_random_plot, label='Random')
 plt.plot(episodes, payment_greedy_plot, label='Greedy')
 plt.legend()
