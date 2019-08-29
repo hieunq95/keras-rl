@@ -8,12 +8,10 @@ CAPACITY_MAX = 4
 
 ENERGY_MAX = 4
 DATA_MAX = 4
-FEERATE_MAX = 4
 MINING_RATE = 4
 
 MEMPOOL_MAX = 10
 MEMPOOL_INIT = 1
-MEMPOOL_SLOPE = 0.75
 
 # constant parameters for uplink, downlink latency
 SNR = 10  # 10dB
@@ -27,10 +25,6 @@ BLK_TIME_SCALE = 1  # 1s
 # constant parameters for blockchain network
 LAMBDA = 3
 MIU = 5  # can serve 6 requests in 1 hour
-
-INTERARRIVAL_RATE = 7  # good enough for convergence
-
-TERMINATION_STEPS = 400
 
 """
 Results note:
@@ -167,4 +161,10 @@ DECAY_EPSILON_END = 2000 / 0.9 - 0.05
     data_qualities = [1, 1]
     LAMBDA = 3
     I = psi1 * d_i + psi2 * m
+    
+q-learning: 4, 5
+    LAMBDA = 3, 1
+q-learning: 6, 7, 8, 9
+    LAMBDA = 3
+    data_qualities = 2, 3, 4, 1
 """

@@ -11,12 +11,12 @@ results-303.xlsx
 
 RANDOM_TEST = './build/results-random-1.xlsx'
 GREEDY_TEST = './build/results-greedy-1.xlsx'
-DRL_TEST = './build/results-1.xlsx'
+DRL_TEST = './build/results-2.xlsx'
 Q_LEARNING_TEST = './build/q_learning-result-2.xlsx'
-DATA_Q1 = './build/results-329.xlsx'
-DATA_Q2 = './build/results-329.xlsx'
-DATA_Q3 = './build/results-330.xlsx'
-DATA_Q4 = './build/results-331.xlsx'
+DATA_Q1 = './build/q_learning-result-9.xlsx'
+DATA_Q2 = './build/q_learning-result-6.xlsx'
+DATA_Q3 = './build/q_learning-result-7.xlsx'
+DATA_Q4 = './build/q_learning-result-8.xlsx'
 
 EWM_WINDOW = 2
 TEST_TH = 314
@@ -42,7 +42,7 @@ plt.plot(np.array([1, 2, 3, 4]), np.array([data_q1_mean[0], data_q2_mean[0], dat
 plt.plot(np.array([1, 2, 3, 4]), np.array([data_q1_mean[1], data_q2_mean[1], data_q3_mean[1], data_q4_mean[1]]), 'r-^', label='Device-2')
 plt.xlabel('Data quality')
 plt.ylabel('Mean data training value')
-plt.ylim([2.5, 3.0])
+plt.ylim([600, 1300])
 plt.legend()
 plt.savefig('./results/data-quality-final.png')
 plt.show()
@@ -213,56 +213,56 @@ plt.show()
 Plot various payment 
 From 172 to 175
 """
-EWM_PAYMENT_WINDOW = 1000
-
-result_1 = './build/results-{}.xlsx'.format(196)
-result_2 = './build/results-{}.xlsx'.format(197)
-result_3 = './build/results-{}.xlsx'.format(198)
-result_4 = './build/results-{}.xlsx'.format(195)
-
-df_1 = pandas.read_excel(result_1)
-df_2 = pandas.read_excel(result_2)
-df_3 = pandas.read_excel(result_3)
-df_4 = pandas.read_excel(result_4)
-
-payment_1 = df_1['Payment'].values
-payment_2 = df_2['Payment'].values
-payment_3 = df_3['Payment'].values
-payment_4 = df_4['Payment'].values
-
-payment_1_ewm = df_1['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-payment_2_ewm = df_2['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-payment_3_ewm = df_3['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-payment_4_ewm = df_4['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-
-latency_1 = df_1['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-latency_2 = df_2['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-latency_3 = df_3['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-latency_4 = df_4['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
-
-payment_1_plot, payment_1_ewm_plot = [], []
-payment_2_plot, payment_2_ewm_plot = [], []
-payment_3_plot, payment_3_ewm_plot = [], []
-payment_4_plot, payment_4_ewm_plot = [], []
-
-sampled_episodes = np.min([len(payment_1), len(payment_2), len(payment_3), len(payment_4)])
-episode_axis = np.arange(0, sampled_episodes)
-
-for i in range(RANGE):
-    payment_1_plot.append(payment_1[i])
-    payment_2_plot.append(payment_2[i])
-    payment_3_plot.append(payment_3[i])
-    payment_4_plot.append(payment_4[i])
-
-    payment_1_ewm_plot.append(payment_1_ewm[i])
-    payment_2_ewm_plot.append(payment_2_ewm[i])
-    payment_3_ewm_plot.append(payment_3_ewm[i])
-    payment_4_ewm_plot.append(payment_4_ewm[i])
-
-
-
-payments = [payment_1_plot, payment_2_plot, payment_3_plot, payment_4_plot]
-payments_ewm = [payment_1_ewm_plot, payment_2_ewm_plot, payment_3_ewm_plot, payment_4_ewm_plot]
+# EWM_PAYMENT_WINDOW = 1000
+#
+# result_1 = './build/results-{}.xlsx'.format(196)
+# result_2 = './build/results-{}.xlsx'.format(197)
+# result_3 = './build/results-{}.xlsx'.format(198)
+# result_4 = './build/results-{}.xlsx'.format(195)
+#
+# df_1 = pandas.read_excel(result_1)
+# df_2 = pandas.read_excel(result_2)
+# df_3 = pandas.read_excel(result_3)
+# df_4 = pandas.read_excel(result_4)
+#
+# payment_1 = df_1['Payment'].values
+# payment_2 = df_2['Payment'].values
+# payment_3 = df_3['Payment'].values
+# payment_4 = df_4['Payment'].values
+#
+# payment_1_ewm = df_1['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+# payment_2_ewm = df_2['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+# payment_3_ewm = df_3['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+# payment_4_ewm = df_4['Payment'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+#
+# latency_1 = df_1['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+# latency_2 = df_2['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+# latency_3 = df_3['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+# latency_4 = df_4['Latency'].ewm(span=EWM_PAYMENT_WINDOW, adjust=True).mean()
+#
+# payment_1_plot, payment_1_ewm_plot = [], []
+# payment_2_plot, payment_2_ewm_plot = [], []
+# payment_3_plot, payment_3_ewm_plot = [], []
+# payment_4_plot, payment_4_ewm_plot = [], []
+#
+# sampled_episodes = np.min([len(payment_1), len(payment_2), len(payment_3), len(payment_4)])
+# episode_axis = np.arange(0, sampled_episodes)
+#
+# for i in range(RANGE):
+#     payment_1_plot.append(payment_1[i])
+#     payment_2_plot.append(payment_2[i])
+#     payment_3_plot.append(payment_3[i])
+#     payment_4_plot.append(payment_4[i])
+#
+#     payment_1_ewm_plot.append(payment_1_ewm[i])
+#     payment_2_ewm_plot.append(payment_2_ewm[i])
+#     payment_3_ewm_plot.append(payment_3_ewm[i])
+#     payment_4_ewm_plot.append(payment_4_ewm[i])
+#
+#
+#
+# payments = [payment_1_plot, payment_2_plot, payment_3_plot, payment_4_plot]
+# payments_ewm = [payment_1_ewm_plot, payment_2_ewm_plot, payment_3_ewm_plot, payment_4_ewm_plot]
 
 
 

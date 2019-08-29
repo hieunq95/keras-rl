@@ -41,7 +41,7 @@ epsilon_decay = (epsilon_max - epsilon_min) / epsilon_trained
 
 # Training parameters
 NB_EPISODES = 4000
-TEST_ID = 2
+TEST_ID = 10
 episode = 0
 epsilon = epsilon_max
 
@@ -103,4 +103,5 @@ for i in range(NB_EPISODES):
     print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}'
           .format(episode, epsilon, episode_reward, steps, episode_reward / steps))
 # End of training
+print('********************* End Q-Learning test-id: {} ***********************'.format(TEST_ID))
 workbook.close()
