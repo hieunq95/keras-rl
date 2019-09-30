@@ -9,10 +9,10 @@ import math
 from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
-from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, FEERATE_MAX, MEMPOOL_MAX, MINING_RATE
+from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, MEMPOOL_MAX, MINING_RATE
 
 
-TEST_ITERATOR = 217
+TEST_ITERATOR = 2
 NB_STEP = 1500000 * 2
 
 IS_GREEDY = 0

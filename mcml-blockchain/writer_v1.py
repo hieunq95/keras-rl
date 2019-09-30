@@ -22,7 +22,8 @@ class MCMLWriter():
         self.worksheet1.write('M1', 'Payment', bold)
         self.worksheet1.write('N1', 'Training_data_mean_1', bold)
         self.worksheet1.write('O1', 'Training_data_mean_2', bold)
-        self.worksheet1.write('P1', 'Mining rate', bold)
+        self.worksheet1.write('P1', 'Training_data_mean_3', bold)
+        self.worksheet1.write('Q1', 'Mining rate', bold)
 
         self.worksheet2 = workbook.add_worksheet()
         self.worksheet2.write('A1', 'Episode', bold)
@@ -57,7 +58,8 @@ class MCMLWriter():
         self.worksheet1.write(episode, 12, info.get('payment'))
         self.worksheet1.write(episode, 13, info.get('training_data_mean_1'))
         self.worksheet1.write(episode, 14, info.get('training_data_mean_2'))
-        self.worksheet1.write(episode, 15, info.get('mining_parameter'))
+        self.worksheet1.write(episode, 15, info.get('training_data_mean_3'))
+        self.worksheet1.write(episode, 16, info.get('mining_parameter'))
 
     def epsilon_write(self, logs, episode):
         """

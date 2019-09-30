@@ -17,12 +17,12 @@ from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
 from writer_v1 import MCMLWriter
 
-TEST_ITERATOR = 4
+TEST_ITERATOR = 5
 NB_STEPS = 2000000
 
 NB_TEST_EPISODES = 1000
 DECAY_EPSILON_END = 2000
-TARGET_MODEL_UPDATE = 1e-3  # hard or soft update
+TARGET_MODEL_UPDATE = 1e-4  # hard or soft update
 """
 Iteration = 142, charging ~ exponential(1.0), penalty = 2
 Iteration = 143, charging ~ exponential(1.0), penalty = 3

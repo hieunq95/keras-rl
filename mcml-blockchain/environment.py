@@ -55,6 +55,7 @@ class Environment(gym.Env):
         self.payment_array = []
         self.accumulated_data_1 = 0
         self.accumulated_data_2 = 0
+        self.accumulated_data_3 = 0
 
         self.seed(123)
         self.reset()
@@ -134,11 +135,12 @@ class Environment(gym.Env):
         blk_price = 0.8
         data_qualities = np.full(shape=NB_DEVICES, fill_value=1)  # 2 devices
         data_qualities[0] = 1
+        data_qualities[1] = 1
 
-        alpha_D = 10
-        alpha_L = 3
-        alpha_E = 1
-        alpha_I = 2
+        alpha_D = 8 * NB_DEVICES
+        alpha_L = 1.5 * NB_DEVICES
+        alpha_E = 0.5 * NB_DEVICES
+        alpha_I = 1 * NB_DEVICES
         REWARD_PENATY = 0.5
 
         data = np.copy(action[self.DATA_OFFSET:self.ENERGY_OFFSET])
@@ -254,6 +256,7 @@ class Environment(gym.Env):
         self.accumulated_data += np.sum(data)
         self.accumulated_data_1 += data[0]
         self.accumulated_data_2 += data[1]
+        self.accumulated_data_3 += data[2]
         self.mining_parameter += corrected_action[-1] - MIU
         # End of statistic
         DATA_THRESOLD = 1000 * NB_DEVICES
@@ -278,6 +281,7 @@ class Environment(gym.Env):
                     'payment': self.payment_per_episode / self.step_counter,
                     'training_data_mean_1': self.accumulated_data_1,
                     'training_data_mean_2': self.accumulated_data_2,
+                    'training_data_mean_3': self.accumulated_data_3,
                     'mining_parameter': self.mining_parameter / self.step_counter,
                    },
             # export results to excel file
@@ -318,6 +322,7 @@ class Environment(gym.Env):
         self.payment_per_episode = 0.0
         self.accumulated_data_1 = 0
         self.accumulated_data_2 = 0
+        self.accumulated_data_3 = 0
         self.mining_parameter = 0
         # End of statistic
         self.action_sample = self.action_space.sample()

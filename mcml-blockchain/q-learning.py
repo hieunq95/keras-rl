@@ -41,7 +41,7 @@ epsilon_decay = (epsilon_max - epsilon_min) / epsilon_trained
 
 # Training parameters
 NB_EPISODES = 4000
-TEST_ID = 10
+TEST_ID = 22
 episode = 0
 epsilon = epsilon_max
 
@@ -51,8 +51,8 @@ workbook = xlsxwriter.Workbook('./build/q_learning-result-{}.xlsx'.format(TEST_I
 writer = MCMLWriter(workbook)
 
 # Initialize q-table
-state_space_size = (CPU_SHARES ** NB_DEVICES) * (CAPACITY_MAX ** NB_DEVICES) * MEMPOOL_MAX  # 4 x 4 x 4 x 4 x MEMPOOL_MAX
-action_space_size = (ENERGY_MAX ** NB_DEVICES) * (DATA_MAX ** NB_DEVICES) * MINING_RATE  # 4 x 4 x 4 x 4 x 4
+state_space_size = (CPU_SHARES ** NB_DEVICES) * (CAPACITY_MAX ** NB_DEVICES) * MEMPOOL_MAX
+action_space_size = (ENERGY_MAX ** NB_DEVICES) * (DATA_MAX ** NB_DEVICES) * MINING_RATE
 q_table = np.zeros((state_space_size, action_space_size))
 print(q_table.shape)
 

@@ -1,7 +1,7 @@
 """
 Config paremeters for Machine crowd machine learning block chain
 """
-NB_DEVICES = 2
+NB_DEVICES = 3
 
 CPU_SHARES = 4
 CAPACITY_MAX = 4
@@ -23,7 +23,7 @@ L_wait = 1  # 100ms
 BLK_TIME_SCALE = 1  # 1s
 
 # constant parameters for blockchain network
-LAMBDA = 3
+LAMBDA = 4
 MIU = 5  # can serve 6 requests in 1 hour
 
 """
@@ -161,10 +161,27 @@ DECAY_EPSILON_END = 2000 / 0.9 - 0.05
     data_qualities = [1, 1]
     LAMBDA = 3
     I = psi1 * d_i + psi2 * m
+5:
+    NB_DEVICES = 3
     
 q-learning: 4, 5
     LAMBDA = 3, 1
 q-learning: 6, 7, 8, 9
     LAMBDA = 3
     data_qualities = 2, 3, 4, 1
+q-learning: 10
+    NB_DEVICES = 3
+q-learning: 11
+    NB_DEVICES = 3
+    epsilon-decay: 0.9 -> 0.1 / 100 eps
+q-learning: 12
+    NB_DEVICES = 3
+    alpha_D = 20
+q-learning: 15, 16, 17, 18
+    NB_DEVICES = 3
+    data_qualities = [1, 1, 1], [2, 2, 1], [3, 2, 1], [4, 2, 1]
+q-learning: 19, 20, 21, 22
+    NB_DEVICES = 3
+    LAMBDA = 1, 2, 3, 4
+
 """
