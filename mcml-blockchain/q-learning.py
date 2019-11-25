@@ -41,7 +41,7 @@ epsilon_decay = (epsilon_max - epsilon_min) / epsilon_trained
 
 # Training parameters
 NB_EPISODES = 4000
-TEST_ID = 22
+TEST_ID = 30
 episode = 0
 epsilon = epsilon_max
 

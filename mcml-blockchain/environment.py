@@ -137,7 +137,7 @@ class Environment(gym.Env):
         data_qualities[0] = 1
         data_qualities[1] = 1
 
-        alpha_D = 8 * NB_DEVICES
+        alpha_D = 5 * NB_DEVICES
         alpha_L = 1.5 * NB_DEVICES
         alpha_E = 0.5 * NB_DEVICES
         alpha_I = 1 * NB_DEVICES
@@ -256,7 +256,10 @@ class Environment(gym.Env):
         self.accumulated_data += np.sum(data)
         self.accumulated_data_1 += data[0]
         self.accumulated_data_2 += data[1]
-        self.accumulated_data_3 += data[2]
+        if NB_DEVICES > 2:
+            self.accumulated_data_3 += data[2]
+        else:
+            self.accumulated_data_3 += 0
         self.mining_parameter += corrected_action[-1] - MIU
         # End of statistic
         DATA_THRESOLD = 1000 * NB_DEVICES

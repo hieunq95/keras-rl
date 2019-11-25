@@ -14,8 +14,9 @@ arrow_properties = dict(
 
 RANDOM_TEST = './build/results-random-1.xlsx'
 GREEDY_TEST = './build/results-greedy-1.xlsx'
-DRL_TEST = './build/results-2.xlsx'
-Q_LEARNING_TEST = './build/q_learning-result-2.xlsx'
+DRL_TEST = './build/results-6.xlsx'
+# Q_LEARNING_TEST = './build/q_learning-result-2.xlsx'
+Q_LEARNING_TEST = './build/q_learning-result-29.xlsx'
 DATA_Q1 = './build/q_learning-result-15.xlsx'
 DATA_Q2 = './build/q_learning-result-16.xlsx'
 DATA_Q3 = './build/q_learning-result-17.xlsx'
@@ -294,11 +295,12 @@ plt.show()
 ************************ Mining rate *************************
 """
 df_ql_4 = pandas.read_excel('./build/q_learning-result-4.xlsx')
-df_ql_5 = pandas.read_excel('./build/q_learning-result-5.xlsx')
-df_ql_6 = pandas.read_excel('./build/q_learning-result-19.xlsx')
-df_ql_7 = pandas.read_excel('./build/q_learning-result-20.xlsx')
-df_ql_8 = pandas.read_excel('./build/q_learning-result-21.xlsx')
-df_ql_9 = pandas.read_excel('./build/q_learning-result-22.xlsx')
+# df_ql_5 = pandas.read_excel('./build/q_learning-result-5.xlsx')
+df_ql_5 = pandas.read_excel('./build/results-6.xlsx')
+df_ql_6 = pandas.read_excel('./build/q_learning-result-27.xlsx')
+df_ql_7 = pandas.read_excel('./build/q_learning-result-28.xlsx')
+df_ql_8 = pandas.read_excel('./build/q_learning-result-29.xlsx')
+df_ql_9 = pandas.read_excel('./build/q_learning-result-30.xlsx')
 
 mining_rates = [np.mean(df_ql_4['Mining rate'].values[3000:4000]),
                 np.mean(df_ql_5['Mining rate'].values[3000:4000]),
@@ -307,7 +309,31 @@ mining_rates = [np.mean(df_ql_4['Mining rate'].values[3000:4000]),
                 np.mean(df_ql_8['Mining rate'].values[3000:4000]),
                 np.mean(df_ql_9['Mining rate'].values[3000:4000])
                 ]
+mining_rate_1 = df_ql_6['Mining rate'].ewm(EWM_WINDOW * 10, adjust=False).mean()
+mining_rate_2 = df_ql_7['Mining rate'].ewm(EWM_WINDOW * 10, adjust=False).mean()
+mining_rate_3 = df_ql_5['Mining rate'].ewm(EWM_WINDOW * 10, adjust=False).mean()
+mining_rate_4 = df_ql_9['Mining rate'].ewm(EWM_WINDOW * 10, adjust=False).mean()
 
+avg_mining_rates_1 = []
+avg_mining_rates_2 = []
+avg_mining_rates_3 = []
+avg_mining_rates_4 = []
+
+for i in range(RANGE):
+    avg_mining_rates_1.append(mining_rate_1[i])
+    avg_mining_rates_2.append(mining_rate_2[i])
+    avg_mining_rates_3.append(mining_rate_3[i])
+    avg_mining_rates_4.append(mining_rate_4[i])
+
+plt.plot(episodes, avg_mining_rates_1, label='$ \lambda = 1$')
+plt.plot(episodes, avg_mining_rates_2, label='$ \lambda = 2$')
+plt.plot(episodes, avg_mining_rates_3, label='$ \lambda = 3$')
+plt.plot(episodes, avg_mining_rates_4, label='$ \lambda = 4$')
+plt.xlabel('Episode')
+plt.ylabel('Average mining rate')
+plt.legend()
+plt.savefig('./results/mining-final.png')
+plt.show()
 print('Mean values:\n Reward: {}\n Energy: {},\n Latency: {},\n Payment: {},\n Mining rate: {}'
       .format(mean_rewards, mean_energies, mean_latencies, mean_payments, mining_rates))
 

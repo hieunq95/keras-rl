@@ -1,7 +1,7 @@
 """
 Config paremeters for Machine crowd machine learning block chain
 """
-NB_DEVICES = 3
+NB_DEVICES = 2
 
 CPU_SHARES = 4
 CAPACITY_MAX = 4
@@ -182,6 +182,9 @@ q-learning: 15, 16, 17, 18
     data_qualities = [1, 1, 1], [2, 2, 1], [3, 2, 1], [4, 2, 1]
 q-learning: 19, 20, 21, 22
     NB_DEVICES = 3
+    LAMBDA = 1, 2, 3, 4
+q-learning: 23, 24, 25, 26
+    NB_DEVICES = 2
     LAMBDA = 1, 2, 3, 4
 
 """
