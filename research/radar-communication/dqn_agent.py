@@ -15,9 +15,9 @@ from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 from environment import AV_Environment
 
 TARGET_MODEL_UPDATE = 1e-3
-NB_STEPS = 200000
+NB_STEPS = 1000000
 EPSILON_LINEAR_STEPS = NB_STEPS * 2 / 3
-TEST_ID = 4
+TEST_ID = 5
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['train', 'test'], default='train')
@@ -62,3 +62,7 @@ elif args.mode == 'test':
         weights_filename = args.weights
     dqn.load_weights(weights_filename)
     dqn.test(env, nb_episodes=100, visualize=False)
+
+print("****************************************"
+      " End of training {}-th " 
+      "****************************************".format(TEST_ID))

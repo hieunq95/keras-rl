@@ -10,7 +10,7 @@ transition_probability = {
     'speed_sw_fast_to_fast': 0.1,
     'speed_sw_slow_to_slow': 0.8,
     'object_sw_moving_to_moving': 0.1,
-    'object_sw_static_to_static': 0.9,
+    'object_sw_static_to_static': 0.8,
     'arrival_mean': 1,
 }
 

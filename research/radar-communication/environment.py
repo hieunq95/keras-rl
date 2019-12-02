@@ -187,7 +187,7 @@ class AV_Environment(gym.Env):
                 reward += 5 * (nb_bad_bits + 1)
         if unexpected_ev_occurs == 1:
             self.nb_unexpected_events += 1
-
+        print(nb_bad_bits)
         return reward
 
     def step(self, action):
