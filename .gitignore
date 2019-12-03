@@ -85,6 +85,6 @@ mcml-blockchain/build/
 mcml-blockchain/results/
 
 # Radar communication
-research/radar-communication/logs
+research/radar-communication/logs/
 
 
