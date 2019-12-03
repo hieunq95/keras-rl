@@ -11,7 +11,10 @@ class AV_Environment(gym.Env):
             [state_space_size['data_size'], state_space_size['channel_size'], state_space_size['road_size'],
              state_space_size['weather_size'], state_space_size['speed_size'], state_space_size['object_size']])
         self.action_space = spaces.Discrete(2)
-        self.nb_unexpected_events = 0
+        self.episode_observation = {
+            'step_counter': 0,
+            'unexpected_ev_counter': 0,
+        }
         self.seed(123)
         self.state = self.reset()
         print(self.state)
@@ -65,7 +68,7 @@ class AV_Environment(gym.Env):
         object_state = state[5]
         #  state transition
         if action == 0:
-            transmitted_packets = 1 if channel_state == 1 else 2
+            transmitted_packets = 2 if channel_state == 1 else 4
         else:
             transmitted_packets = 0
         arrived_packets = self.nprandom.poisson(transition_probability['arrival_mean'])
@@ -87,29 +90,6 @@ class AV_Environment(gym.Env):
         weather_state = state[3]
         speed_state = state[4]
         object_state = state[5]
-
-        # def _get_occurrence_probability(current_state, state_id):
-        #     occurrence_probability = 0.0
-        #     x_occurs = 0
-        #     if current_state == 1:
-        #         if state_id == 2:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_bad_road']
-        #         if state_id == 3:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_bad_weather']
-        #         if state_id == 4:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_fast_speed']
-        #         if state_id == 5:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_moving_object']
-        #     else:
-        #         if state_id == 2:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_good_road']
-        #         if state_id == 3:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_good_weather']
-        #         if state_id == 4:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_slow_speed']
-        #         if state_id == 5:
-        #             occurrence_probability = unexpected_ev_prob['occur_with_static_object']
-        #     return occurrence_probability
 
         if road_state == 1:
            if self.nprandom.uniform() < unexpected_ev_prob['occur_with_bad_road']:
@@ -186,15 +166,16 @@ class AV_Environment(gym.Env):
             else:
                 reward += 5 * (nb_bad_bits + 1)
         if unexpected_ev_occurs == 1:
-            self.nb_unexpected_events += 1
-        print(nb_bad_bits)
+            self.episode_observation['unexpected_ev_counter'] += 1
+        # print(nb_bad_bits)
         return reward
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
         next_state = self.state_transition(self.state, action)
         reward = self.get_reward(action)
-        if self.nb_unexpected_events == 10:
+        self.episode_observation['step_counter'] += 1
+        if self.episode_observation['step_counter'] == 400:
             done = True
         else:
             done = False
@@ -202,7 +183,8 @@ class AV_Environment(gym.Env):
         return next_state, reward, done, {}
 
     def reset(self):
-        self.nb_unexpected_events = 0
+        self.episode_observation['step_counter'] = 0
+        self.episode_observation['unexpected_ev_counter'] = 0
         self.state = np.array([
             random.randint(0, state_space_size['data_size'] - 1),
             random.randint(0, state_space_size['channel_size'] - 1),

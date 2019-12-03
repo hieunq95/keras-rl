@@ -13,11 +13,13 @@ from rl.core import Processor
 from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 
 from environment import AV_Environment
+from config import test_parameters
+from logger import Logger
 
-TARGET_MODEL_UPDATE = 1e-3
-NB_STEPS = 1000000
+TEST_ID = test_parameters['test_id']
+NB_STEPS = test_parameters['nb_steps']
 EPSILON_LINEAR_STEPS = NB_STEPS * 2 / 3
-TEST_ID = 5
+TARGET_MODEL_UPDATE = test_parameters['target_model_update']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['train', 'test'], default='train')
@@ -52,10 +54,10 @@ if args.mode == 'train':
     checkpoint_weights_filename = './logs/dqn_' + args.env_name + '_weights_{step}.h5f'
     log_filename = './logs/dqn_{}_log_{}.json'.format(args.env_name, TEST_ID)
     callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=NB_STEPS/2)]
-    callbacks += [FileLogger(log_filename, interval=100)]
+    callbacks += [Logger(log_filename, environment=env, interval=100)]
     dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None, callbacks=callbacks)
     dqn.save_weights(weights_filename, overwrite=True)
-    dqn.test(env, nb_episodes=100, visualize=False)
+    dqn.test(env, nb_episodes=10, visualize=False)
 elif args.mode == 'test':
     weights_filename = './logs/dqn_{}_weights_{}.h5f'.format(args.env_name, TEST_ID)
     if args.weights:

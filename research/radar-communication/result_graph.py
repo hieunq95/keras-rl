@@ -4,12 +4,11 @@ import json
 import matplotlib.pyplot as plt
 import pandas
 
-#  loss mae mean_q mean_eps episode_reward nb_episode_steps nb_steps episode duration
+#  loss mae mean_q mean_eps episode_reward nb_episode_steps nb_steps episode duration nb_unexpected_ev
 
-EWM_WINDOW = 50
-EVALUATED_VALUE = 'nb_episode_steps'
-
-DATA = './logs/dqn_AV_Radar-v1_log_5.json'
+EWM_WINDOW = 10
+EVALUATED_VALUE = 'episode_reward'
+DATA = './logs/dqn_AV_Radar-v1_log_11.json'
 x_array = []
 y_array = []
 y_ewm_array = []

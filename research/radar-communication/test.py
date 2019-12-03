@@ -14,13 +14,14 @@ for e in range(1000):
         action = env.action_space.sample()
         next_state, reward, done, info = env.step(action)
         cumulative_reward += reward
-        plot_target = reward
+        plot_target = next_state[5]
         histogram.append(plot_target)
+
         # print(t, next_state, reward, done, info)
         if done == True:
             # print('Break at t = {}'.format(t))
-            plot_target = reward
-            histogram.append(plot_target)
+            # plot_target = next_state[1]
+            # histogram.append(plot_target)
             env.reset()
             break
 
