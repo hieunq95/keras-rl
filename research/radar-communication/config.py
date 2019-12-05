@@ -1,5 +1,7 @@
 #  System parameters for Radar communication in Autonomous Vehicle
+from __future__ import division
 
+UNEXPECTED_EV_PROB = 0.05
 transition_probability = {
     'channel_sw_bad_to_bad': 0.1,
     'channel_sw_good_to_good': 0.9,
@@ -15,14 +17,14 @@ transition_probability = {
 }
 
 unexpected_ev_prob = {
-    'occur_with_bad_road': 0.1,
-    'occur_with_good_road': 0.01,
-    'occur_with_bad_weather': 0.1,
-    'occur_with_good_weather': 0.01,
-    'occur_with_fast_speed': 0.1,
-    'occur_with_slow_speed': 0.01,
-    'occur_with_moving_object': 0.1,
-    'occur_with_static_object': 0.01,
+    'occur_with_bad_road': UNEXPECTED_EV_PROB,
+    'occur_with_good_road': UNEXPECTED_EV_PROB / 10,
+    'occur_with_bad_weather': UNEXPECTED_EV_PROB,
+    'occur_with_good_weather': UNEXPECTED_EV_PROB / 10,
+    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 3,
+    'occur_with_slow_speed': 0,
+    'occur_with_moving_object': UNEXPECTED_EV_PROB,
+    'occur_with_static_object': UNEXPECTED_EV_PROB / 10,
 }
 
 state_space_size = {
@@ -40,7 +42,7 @@ action_space_size = {
 
 #  Parameters for testing DQN agent
 test_parameters = {
-    'test_id': 11,
+    'test_id': 16,
     'nb_steps': 1000000,
     'target_model_update': 1e-3,
 }

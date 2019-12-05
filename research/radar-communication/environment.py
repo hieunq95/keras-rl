@@ -78,14 +78,22 @@ class AV_Environment(gym.Env):
         next_channel_state = self.markov_transition(channel_state, 1)
         next_road_state = self.markov_transition(road_state, 2)
         next_weather_state = self.markov_transition(weather_state, 3)
-        next_speed_state = self.markov_transition(speed_state, 4)
-        next_object_state = self.markov_transition(object_state, 5)
+        if object_state == 1:
+            if action == 1:
+                next_speed_state = 0
+                next_object_state = self.markov_transition(object_state, 5)
+            else:
+                next_speed_state = self.markov_transition(speed_state, 4)
+                next_object_state = self.markov_transition(object_state, 5)
+        else:
+            next_speed_state = self.markov_transition(speed_state, 4)
+            next_object_state = self.markov_transition(object_state, 5)
+
         next_state = np.array([next_data_queue_state, next_channel_state, next_road_state,
                                next_weather_state, next_speed_state, next_object_state]).flatten()
         return next_state
 
     def risk_assessment(self, state):
-        unexpected_event = 0
         road_state = state[2]
         weather_state = state[3]
         speed_state = state[4]
@@ -177,6 +185,8 @@ class AV_Environment(gym.Env):
         self.episode_observation['step_counter'] += 1
         if self.episode_observation['step_counter'] == 400:
             done = True
+            # print('Unexpected events / Episode steps = {} / {}'
+            #       .format(self.episode_observation['unexpected_ev_counter'], self.episode_observation['step_counter']))
         else:
             done = False
 
