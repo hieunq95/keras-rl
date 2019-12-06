@@ -2,9 +2,14 @@ from __future__ import division
 from environment import AV_Environment
 import matplotlib.pyplot as plt
 import numpy as np
-
+import json
 
 env = AV_Environment()
+json_data = {}
+json_data['episode'] = []
+json_data['episode_reward'] = []
+json_data['nb_unexpected_ev'] = []
+json_data['nb_episode_steps'] = []
 
 def alternative_switch_action(t):
     if t % 2 == 0:
@@ -17,7 +22,7 @@ histogram = []
 x_array = []
 y_array = []
 y_value = 0
-for e in range(1000):
+for e in range(2500):
     plot_target = 0
     cumulative_reward = 0
     x_array.append(e)
@@ -39,9 +44,17 @@ for e in range(1000):
             y_value = env.episode_observation['unexpected_ev_counter']
             # y_value = cumulative_reward
             y_array.append(y_value)
-            # y_array.append(np.random.randint(1, 10))
+            # Save data to json file
+            json_data['episode'].append(e)
+            json_data['episode_reward'].append(int(cumulative_reward))
+            json_data['nb_unexpected_ev'].append(env.episode_observation['unexpected_ev_counter'])
+            json_data['nb_episode_steps'].append(t)
             env.reset()
             break
+
+with open('./logs/switch_AV_Radar_log.json', 'w') as outfile:
+    json.dump(json_data, outfile)
+
 print(np.mean(y_array))
 plt.plot(x_array, y_array)
 plt.show()
