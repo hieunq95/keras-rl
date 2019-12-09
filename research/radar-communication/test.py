@@ -22,7 +22,7 @@ histogram = []
 x_array = []
 y_array = []
 y_value = 0
-for e in range(2500):
+for e in range(5000):
     plot_target = 0
     cumulative_reward = 0
     x_array.append(e)
@@ -32,7 +32,7 @@ for e in range(2500):
         action = alternative_switch_action(t)
         next_state, reward, done, info = env.step(action)
         cumulative_reward += reward
-        plot_target = next_state[5]
+        plot_target = next_state[3]
         histogram.append(plot_target)
         # y_value += plot_target
 

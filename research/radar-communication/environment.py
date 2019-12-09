@@ -100,9 +100,9 @@ class AV_Environment(gym.Env):
         object_state = state[5]
 
         if road_state == 1:
-           if self.nprandom.uniform() < unexpected_ev_prob['occur_with_bad_road']:
+            if self.nprandom.uniform() < unexpected_ev_prob['occur_with_bad_road']:
                unexpected_event = 1
-           else:
+            else:
                unexpected_event = 0
         else:
             if self.nprandom.uniform() < unexpected_ev_prob['occur_with_good_road']:
@@ -154,8 +154,7 @@ class AV_Environment(gym.Env):
         return 0
 
 
-    def get_reward(self, action):
-        state = self.state
+    def get_reward(self, state, action):
         unexpected_ev_occurs = self.risk_assessment(state)
         channel_state = state[1]
         nb_bad_bits = state[2] + state[3] + state[4] + state[5]
@@ -180,8 +179,9 @@ class AV_Environment(gym.Env):
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
-        next_state = self.state_transition(self.state, action)
-        reward = self.get_reward(action)
+        state = np.copy(self.state)
+        next_state = self.state_transition(state, action)
+        reward = self.get_reward(state, action)
         self.episode_observation['step_counter'] += 1
         if self.episode_observation['step_counter'] == 400:
             done = True
@@ -189,6 +189,7 @@ class AV_Environment(gym.Env):
             #       .format(self.episode_observation['unexpected_ev_counter'], self.episode_observation['step_counter']))
         else:
             done = False
+        self.state = next_state
 
         return next_state, reward, done, {}
 

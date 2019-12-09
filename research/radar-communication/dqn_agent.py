@@ -18,7 +18,7 @@ from logger import Logger
 
 TEST_ID = test_parameters['test_id']
 NB_STEPS = test_parameters['nb_steps']
-EPSILON_LINEAR_STEPS = NB_STEPS * 2 / 3
+EPSILON_LINEAR_STEPS = test_parameters['nb_epsilon_linear']
 TARGET_MODEL_UPDATE = test_parameters['target_model_update']
 
 parser = argparse.ArgumentParser()
