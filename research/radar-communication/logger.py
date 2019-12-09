@@ -21,6 +21,7 @@ class Logger(Callback):
         self.metrics = {}
         self.starts = {}
         self.data = {}
+        self.actions = []
         self._set_env(env=environment)
 
     def on_train_begin(self, logs):
@@ -51,7 +52,9 @@ class Logger(Callback):
 
         data = list(zip(self.metrics_names, mean_metrics))
         data += list(logs.items())
-        data += [('episode', episode), ('duration', duration), ('nb_unexpected_ev', self.env.episode_observation['unexpected_ev_counter'])]
+        data += [('episode', episode), ('duration', duration),
+                 ('nb_unexpected_ev', self.env.episode_observation['unexpected_ev_counter']), ('mean_action', np.mean(self.actions)),
+                 ('wrong_mode_actions', self.env.episode_observation['wrong_mode_actions'])]
         for key, value in data:
             if key not in self.data:
                 self.data[key] = []
@@ -61,12 +64,14 @@ class Logger(Callback):
             self.save_data()
 
         # Clean up.
+        self.actions = []
         del self.metrics[episode]
         del self.starts[episode]
 
     def on_step_end(self, step, logs):
         """ Append metric at the end of each step """
         self.metrics[logs['episode']].append(logs['metrics'])
+        self.actions.append(logs['action'])
 
     def save_data(self):
         """ Save metrics in a json file """

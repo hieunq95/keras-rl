@@ -14,6 +14,7 @@ class AV_Environment(gym.Env):
         self.episode_observation = {
             'step_counter': 0,
             'unexpected_ev_counter': 0,
+            'wrong_mode_actions': 0,
         }
         self.seed(123)
         self.state = self.reset()
@@ -81,7 +82,8 @@ class AV_Environment(gym.Env):
         if object_state == 1:
             if action == 1:
                 next_speed_state = 0
-                next_object_state = self.markov_transition(object_state, 5)
+                # if the AV's speed is slowed down, the moving object's state should be changed as well
+                next_object_state = 0 if np.random.uniform() < 0.9 else 1  # 90% it change to good state
             else:
                 next_speed_state = self.markov_transition(speed_state, 4)
                 next_object_state = self.markov_transition(object_state, 5)
@@ -167,6 +169,7 @@ class AV_Environment(gym.Env):
                     reward += 1
             else:
                 reward -= 50
+                self.episode_observation['wrong_mode_actions'] += 1
         else:
             if unexpected_ev_occurs == 0:
                 reward += 0
@@ -196,6 +199,7 @@ class AV_Environment(gym.Env):
     def reset(self):
         self.episode_observation['step_counter'] = 0
         self.episode_observation['unexpected_ev_counter'] = 0
+        self.episode_observation['wrong_mode_actions'] = 0
         self.state = np.array([
             random.randint(0, state_space_size['data_size'] - 1),
             random.randint(0, state_space_size['channel_size'] - 1),

@@ -10,6 +10,8 @@ json_data['episode'] = []
 json_data['episode_reward'] = []
 json_data['nb_unexpected_ev'] = []
 json_data['nb_episode_steps'] = []
+json_data['mean_action'] = []
+json_data['wrong_mode_actions'] = []
 
 def alternative_switch_action(t):
     if t % 2 == 0:
@@ -22,11 +24,13 @@ histogram = []
 x_array = []
 y_array = []
 y_value = 0
-for e in range(5000):
+for e in range(1, 2501):
     plot_target = 0
     cumulative_reward = 0
     x_array.append(e)
     y_value = 0
+    actions = []
+    wrong_mode_actions = 0
     for t in range(1000):
         # action = env.action_space.sample()
         action = alternative_switch_action(t)
@@ -34,6 +38,9 @@ for e in range(5000):
         cumulative_reward += reward
         plot_target = next_state[3]
         histogram.append(plot_target)
+        actions.append(action)
+        if reward < 0:
+            wrong_mode_actions += 1
         # y_value += plot_target
 
         # print(t, next_state, reward, done, info)
@@ -49,6 +56,8 @@ for e in range(5000):
             json_data['episode_reward'].append(int(cumulative_reward))
             json_data['nb_unexpected_ev'].append(env.episode_observation['unexpected_ev_counter'])
             json_data['nb_episode_steps'].append(t)
+            json_data['mean_action'].append(np.mean(actions))
+            json_data['wrong_mode_actions'].append(wrong_mode_actions)
             env.reset()
             break
 
