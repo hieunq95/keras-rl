@@ -21,9 +21,9 @@ unexpected_ev_prob = {
     'occur_with_good_road': UNEXPECTED_EV_PROB / 10,
     'occur_with_bad_weather': UNEXPECTED_EV_PROB,
     'occur_with_good_weather': UNEXPECTED_EV_PROB / 10,
-    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20,
-    'occur_with_slow_speed': UNEXPECTED_EV_PROB / 100,
-    'occur_with_moving_object': UNEXPECTED_EV_PROB,
+    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20,  # variable 1
+    'occur_with_slow_speed': UNEXPECTED_EV_PROB / 10,
+    'occur_with_moving_object': UNEXPECTED_EV_PROB,  # variable 2
     'occur_with_static_object': UNEXPECTED_EV_PROB / 10,
 }
 
@@ -42,10 +42,75 @@ action_space_size = {
 
 #  Parameters for testing DQN agent
 test_parameters = {
-    'test_id': 13,
-    'nb_steps': 2000000,
-    'nb_epsilon_linear': 1200000,
+    'test_id': 35,
+    'nb_steps': 1000000,
+    'nb_epsilon_linear': 600000,
     'target_model_update': 1e-3,
 }
+
+"""
+'test_id': 15,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB,
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 24,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 2,
+'occur_with_moving_object': UNEXPECTED_EV_PROB * 2,
+--------------------------
+'test_id': 16,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 4,
+'occur_with_moving_object': UNEXPECTED_EV_PROB * 4,
+--------------------------
+'test_id': 25,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 8,
+'occur_with_moving_object': UNEXPECTED_EV_PROB * 8,
+--------------------------
+'test_id': 17,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 16,
+'occur_with_moving_object': UNEXPECTED_EV_PROB * 16,
+--------------------------
+--------------------------
+'test_id': 26,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 2, # 0.1
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 27,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 4, # 0.2
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 28,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 6, # 0.3
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 29,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 8, # 0.4
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 30,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 10, # 0.5
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 31,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 12, # 0.6
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 32,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 14, # 0.7
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 33,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 16, # 0.8
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 34,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 18, # 0.9
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+'test_id': 35,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20, # 1.0
+'occur_with_moving_object': UNEXPECTED_EV_PROB,
+--------------------------
+
+"""
 
 
