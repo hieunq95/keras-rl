@@ -1,10 +1,10 @@
 #  Create results in json
+from __future__ import division
 from rl.callbacks import Callback
 import warnings
 import timeit
 import json
 from tempfile import mkdtemp
-
 import numpy as np
 
 from keras import __version__ as KERAS_VERSION
@@ -54,7 +54,8 @@ class Logger(Callback):
         data += list(logs.items())
         data += [('episode', episode), ('duration', duration),
                  ('nb_unexpected_ev', self.env.episode_observation['unexpected_ev_counter']), ('mean_action', np.mean(self.actions)),
-                 ('wrong_mode_actions', self.env.episode_observation['wrong_mode_actions'])]
+                 ('wrong_mode_actions', self.env.episode_observation['wrong_mode_actions']),
+                 ('throughput', self.env.episode_observation['throughput'] / 400)]
         for key, value in data:
             if key not in self.data:
                 self.data[key] = []

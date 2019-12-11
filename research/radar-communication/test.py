@@ -1,5 +1,6 @@
 from __future__ import division
 from environment import AV_Environment
+from config import test_parameters
 import matplotlib.pyplot as plt
 import numpy as np
 import json
@@ -12,6 +13,7 @@ json_data['nb_unexpected_ev'] = []
 json_data['nb_episode_steps'] = []
 json_data['mean_action'] = []
 json_data['wrong_mode_actions'] = []
+json_data['throughput'] = []
 
 def alternative_switch_action(t):
     if t % 2 == 0:
@@ -58,10 +60,11 @@ for e in range(1, 2501):
             json_data['nb_episode_steps'].append(t)
             json_data['mean_action'].append(np.mean(actions))
             json_data['wrong_mode_actions'].append(wrong_mode_actions)
+            json_data['throughput'].append(env.episode_observation['throughput'] / 400)
             env.reset()
             break
 
-with open('./logs/switch_AV_Radar_log.json', 'w') as outfile:
+with open('./logs/switch_AV_Radar_log_{}.json'.format(test_parameters['test_id']), 'w') as outfile:
     json.dump(json_data, outfile)
 
 print(np.mean(y_array))

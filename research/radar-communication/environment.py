@@ -15,6 +15,7 @@ class AV_Environment(gym.Env):
             'step_counter': 0,
             'unexpected_ev_counter': 0,
             'wrong_mode_actions': 0,
+            'throughput': 0,
         }
         self.seed(123)
         self.state = self.reset()
@@ -93,6 +94,8 @@ class AV_Environment(gym.Env):
 
         next_state = np.array([next_data_queue_state, next_channel_state, next_road_state,
                                next_weather_state, next_speed_state, next_object_state]).flatten()
+        # get information from observation
+        self.episode_observation['throughput'] += transmitted_packets
         return next_state
 
     def risk_assessment(self, state):
@@ -188,8 +191,6 @@ class AV_Environment(gym.Env):
         self.episode_observation['step_counter'] += 1
         if self.episode_observation['step_counter'] == 400:
             done = True
-            # print('Unexpected events / Episode steps = {} / {}'
-            #       .format(self.episode_observation['unexpected_ev_counter'], self.episode_observation['step_counter']))
         else:
             done = False
         self.state = next_state
@@ -200,6 +201,7 @@ class AV_Environment(gym.Env):
         self.episode_observation['step_counter'] = 0
         self.episode_observation['unexpected_ev_counter'] = 0
         self.episode_observation['wrong_mode_actions'] = 0
+        self.episode_observation['throughput'] = 0
         self.state = np.array([
             random.randint(0, state_space_size['data_size'] - 1),
             random.randint(0, state_space_size['channel_size'] - 1),
