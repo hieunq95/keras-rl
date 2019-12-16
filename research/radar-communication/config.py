@@ -3,7 +3,7 @@ from __future__ import division
 
 UNEXPECTED_EV_PROB = 0.05
 transition_probability = {
-    'channel_sw_bad_to_bad': 0.1,
+    'channel_sw_bad_to_bad': 0.1,  # variable 2
     'channel_sw_good_to_good': 0.9,
     'road_sw_bad_to_bad': 0.1,
     'road_sw_good_to_good': 0.9,
@@ -21,9 +21,9 @@ unexpected_ev_prob = {
     'occur_with_good_road': UNEXPECTED_EV_PROB / 10,
     'occur_with_bad_weather': UNEXPECTED_EV_PROB,
     'occur_with_good_weather': UNEXPECTED_EV_PROB / 10,
-    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20,  # variable 1
+    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 2,  # variable 1
     'occur_with_slow_speed': UNEXPECTED_EV_PROB / 10,
-    'occur_with_moving_object': UNEXPECTED_EV_PROB,  # variable 2
+    'occur_with_moving_object': UNEXPECTED_EV_PROB,
     'occur_with_static_object': UNEXPECTED_EV_PROB / 10,
 }
 
@@ -42,7 +42,7 @@ action_space_size = {
 
 #  Parameters for testing DQN agent
 test_parameters = {
-    'test_id': 35,
+    'test_id': 46,
     'nb_steps': 1000000,
     'nb_epsilon_linear': 600000,
     'target_model_update': 1e-3,
@@ -110,6 +110,69 @@ test_parameters = {
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20, # 1.0
 'occur_with_moving_object': UNEXPECTED_EV_PROB,
 --------------------------
+--------------------------
+'test_id': 36,
+'channel_sw_bad_to_bad': 0.1 * 1,  # 0.1
+--------------------------
+'test_id': 37,
+'channel_sw_bad_to_bad': 0.1 * 2,  # 0.2
+--------------------------
+'test_id': 38,
+'channel_sw_bad_to_bad': 0.1 * 3,  # 0.3
+--------------------------
+'test_id': 39,
+'channel_sw_bad_to_bad': 0.1 * 4,  # 0.4
+--------------------------
+'test_id': 40,
+'channel_sw_bad_to_bad': 0.1 * 5,  # 0.5
+--------------------------
+'test_id': 41,
+'channel_sw_bad_to_bad': 0.1 * 6,  # 0.6
+--------------------------
+'test_id': 42,
+'channel_sw_bad_to_bad': 0.1 * 7,  # 0.7
+--------------------------
+'test_id': 43,
+'channel_sw_bad_to_bad': 0.1 * 8,  # 0.8
+--------------------------
+'test_id': 44,
+'channel_sw_bad_to_bad': 0.1 * 9,  # 0.9
+--------------------------
+'test_id': 45,
+'channel_sw_bad_to_bad': 0.1 * 10,  # 10
+--------------------------
+--------------------------
+'test_id': 46,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 2, # 0.1
+--------------------------
+'test_id': 47,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 4, # 0.2
+-------------------------
+'test_id': 48,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 6, # 0.3
+--------------------------
+'test_id': 49,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 8, # 0.4
+--------------------------
+'test_id': 50,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 10, # 0.5
+--------------------------
+'test_id': 51,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 12, # 0.6
+--------------------------
+'test_id': 52,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 14, # 0.7
+--------------------------
+'test_id': 53,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 16, # 0.8
+--------------------------
+'test_id': 54,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 18, # 0.9
+--------------------------
+'test_id': 55,
+'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20, # 1.0
+--------------------------
+
 
 """
 
