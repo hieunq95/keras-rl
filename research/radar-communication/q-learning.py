@@ -25,18 +25,47 @@ q_table = {
 }
 q_state_size = state_space_size['data_size'] * state_space_size['channel_size'] * state_space_size['road_size'] \
                * state_space_size['weather_size'] * state_space_size['speed_size'] * state_space_size['object_size']
+print(q_state_size)
+state_retrieval = {}  # table for retrieval actual state values to decimal state value
+# adding key-value pairs to the state_retrieval dictionary, key: decimal state, value: actual state
+for i in range(q_state_size):
+    # arrange state vector s = {d, c, r, w, v, m}
+    c, r, w, v, m = 0, 0, 0, 0, 0
+    c_offset = int(i / 11) % 32
+    r_offset = int(i / 11) % 16
+    w_offset = int(i / 11) % 8
+    v_offset = int(i / 11) % 4
+    m_offset = int(i / 11) % 2
 
+    d = i % 11
+    if m_offset == 0:
+        m = 0
+    else:
+        m = 1
+    if v_offset in np.arange(0, 2):
+        v = 0
+    if v_offset in np.arange(2, 4):
+        v = 1
+    if w_offset in np.arange(0, 4):
+        w = 0
+    if w_offset in np.arange(4, 8):
+        w = 1
+    if r_offset in np.arange(0, 16):
+        r = 0
+    if r_offset in np.arange(16, 32):
+        r = 1
+    if c_offset in np.arange(0, 16):
+        c = 0
+    if c_offset in np.arange(16, 32):
+        c = 1
+
+    actual_state = [d, c, r, w, v, m]
+    state_retrieval['{}'.format(i)] = actual_state
+
+print(state_retrieval)
 #  Initialize Q-table
-q_table['q-values'].append([q_table['state'], 0.0, 0.0])
-print(q_table)
-while len(q_table['q-values']) <= q_state_size:
-    sampled_state = q_table['state'].sample()
-    for s in q_table['q-values']:
-        if (sampled_state == s[0]).all():
-            print('duplicate {}'.format(s[0]), len(q_table['q-values']))
-            break
-        else:
-            q_table['q-values'].append([sampled_state, 0.0, 0.0])
+print(13 / 11, int(13 / 11), 11 % 11)
 
-print(q_table['q-values'])
-print(len(q_table['q-values']))
+print(np.arange(2, 4))
+if 5 in np.arange(2, 5):
+    print('FOUND')
