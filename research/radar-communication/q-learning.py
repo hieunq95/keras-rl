@@ -84,16 +84,19 @@ y_value = 0
 q_state_size = state_space_size['data_size'] * state_space_size['channel_size'] * state_space_size['road_size'] \
                * state_space_size['weather_size'] * state_space_size['speed_size'] * state_space_size['object_size']
 print(q_state_size)
+
 # Adding key-value pairs to the state_retrieval dictionary, key: decimal state, value: actual state
 retrieval_table = generate_retrieval_table(q_state_size)
 print(retrieval_table)
+
 #  Initialize Q-table
 q_table = {}
 for i in range(q_state_size):
     q_table['{}'.format(i)] = [0, 0]
 print(q_table)
+
 # Training begins
-TEST_ID = 1
+TEST_ID = test_parameters['test_id']
 print('********************* Start Q-Learning test-id: {} ***********************'.format(TEST_ID))
 epsilon = learning_parameters['eps_max']
 
