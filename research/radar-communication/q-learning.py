@@ -2,7 +2,7 @@
 
 from __future__ import division
 from environment import AV_Environment
-from config import test_parameters, state_space_size, action_space_size
+from config import test_parameters, state_space_size, action_space_size, transition_probability, unexpected_ev_prob
 from gym import spaces
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,7 +60,7 @@ learning_parameters = {
     'gamma': 0.9,
     'eps_max': 1,
     'eps_min': 0.1,
-    'nb_episodes': 2500,
+    'nb_episodes': 5000,
     'linear_episodes': 1500,
     'eps_decay': (1 - 0.1) / 1500,
 }
@@ -75,6 +75,8 @@ json_data['nb_episode_steps'] = []
 json_data['mean_action'] = []
 json_data['wrong_mode_actions'] = []
 json_data['throughput'] = []
+json_data['mean_q'] = []
+json_data['mean_eps'] = []
 
 histogram = []
 x_array = []
@@ -83,26 +85,33 @@ y_value = 0
 
 q_state_size = state_space_size['data_size'] * state_space_size['channel_size'] * state_space_size['road_size'] \
                * state_space_size['weather_size'] * state_space_size['speed_size'] * state_space_size['object_size']
-print(q_state_size)
+print('State space: {}'.format(q_state_size))
 
 # Adding key-value pairs to the state_retrieval dictionary, key: decimal state, value: actual state
 retrieval_table = generate_retrieval_table(q_state_size)
-print(retrieval_table)
+# print(retrieval_table)
 
 #  Initialize Q-table
 q_table = {}
 for i in range(q_state_size):
     q_table['{}'.format(i)] = [0, 0]
-print(q_table)
+# print(q_table)
 
 # Training begins
 TEST_ID = test_parameters['test_id']
 print('********************* Start Q-Learning test-id: {} ***********************'.format(TEST_ID))
+print('************************************************************************** \n '
+      '**************************** Simulation parameters*********************** \n'
+      '{} \n {} \n {} \n {} \n {} \n'.format(transition_probability, unexpected_ev_prob, state_space_size,
+                                          action_space_size, learning_parameters)
+      + '*************************************************************************** \n')
+
 epsilon = learning_parameters['eps_max']
 
 for e in range(1, learning_parameters['nb_episodes'] + 1):
     actions = []
     wrong_mode_actions = 0
+    max_q_array = []
 
     actual_state = env.reset()
     q_state = get_key_from_value(retrieval_table, actual_state)
@@ -144,10 +153,15 @@ for e in range(1, learning_parameters['nb_episodes'] + 1):
     json_data['nb_episode_steps'].append(steps)
     json_data['mean_action'].append(np.mean(actions))
     json_data['wrong_mode_actions'].append(wrong_mode_actions)
-    json_data['throughput'].append(env.episode_observation['throughput'] / 400)
+    json_data['throughput'].append(env.episode_observation['throughput'] / steps)
+    json_data['mean_eps'].append(epsilon)
 
-    print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}'
-          .format(e, epsilon, episode_reward, steps, episode_reward / steps))
+    for k in range(q_state_size):
+        max_q_array.append(np.amax(q_table['{}'.format(k)]))
+    json_data['mean_q'].append(np.mean(max_q_array))
+
+    print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}, Mean_q: {}'
+          .format(e, epsilon, episode_reward, steps, episode_reward / steps, json_data['mean_q'][e - 1]))
 
 with open('./logs/q_learning_AV_Radar_log_{}.json'.format(TEST_ID), 'w') as outfile:
     json.dump(json_data, outfile)
