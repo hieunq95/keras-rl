@@ -9,7 +9,7 @@ from gym import spaces
 from gym.utils import seeding
 from rl.core import Processor
 from config import NB_DEVICES, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, MEMPOOL_MAX, MEMPOOL_INIT, \
-    LAMBDA, MIU, MINING_RATE, SNR, W, d_fr, d_train, d_blk, L_wait, BLK_TIME_SCALE
+    LAMBDA, MIU, MINING_RATE, SNR, W, d_fr, d_train, d_blk, L_wait, BLK_TIME_SCALE, ATTACKER_RATES, ATTACK_SUCCESSFUL_PROB
 
 class Environment(gym.Env):
 
@@ -75,7 +75,7 @@ class Environment(gym.Env):
 
         capacity_array = np.copy(state[SECOND_OFFSET:THIRD_OFFSET])
         energy_array = np.copy(action[SECOND_OFFSET:THIRD_OFFSET])
-        mining_rate = MIU + action[-1]  # 4, 5, 6, 7
+        mining_rate = MIU + action[-1]  # 5, 6, 7, 8
         charging_array = self.nprandom.poisson(1, size=len(energy_array))
         cpu_shares_array = self.nprandom.randint(CPU_SHARES, size=NB_DEVICES)
         next_capacity_array = np.zeros(len(capacity_array), dtype=np.int32)
@@ -148,7 +148,7 @@ class Environment(gym.Env):
         mining_rate = MIU + action[-1]
         mempool_max_temp = min(self.nprandom.geometric(1 - (LAMBDA / mining_rate), size=10000))
         mempool_state = self.mempool_state
-        payment = [training_price * data[k] + blk_price / mempool_state for k in range(len(data))]
+        payment = [training_price * data[k] + blk_price / np.log(mempool_state + 1) for k in range(len(data))]
 
         ENERGY_THRESOLD = (ENERGY_MAX-1) * NB_DEVICES
         DATA_THRESOLD = (DATA_MAX-1) * NB_DEVICES
@@ -156,7 +156,10 @@ class Environment(gym.Env):
         LATENCY_THRESOLD = (tau ** 0.5) * (nu ** 1.5) * (delta ** (-0.5)) * (DATA_MAX - 1) ** 1.5
         l_tx = (d_fr + d_train + d_blk) / (W * math.log2(1 + SNR))
         LATENCY_THRESOLD += 2 * L_wait + l_tx + BLK_TIME_SCALE * max(self.nprandom.exponential(1 / (mining_rate - LAMBDA), 1000))
-        accumulated_data = np.sum([data_qualities[k] * data[k] for k in range(NB_DEVICES)]) / np.sum(data_qualities)
+        if np.random.uniform() < ATTACK_SUCCESSFUL_PROB[1]:
+            accumulated_data = 0
+        else:
+            accumulated_data = np.sum([data_qualities[k] * data[k] for k in range(NB_DEVICES)]) / np.sum(data_qualities)
         total_energy = np.sum(energy)
         latency = self.calculate_latency(action)
         payment = np.sum(payment)
@@ -387,8 +390,9 @@ class MyProcessor(Processor):
                 feerate_i = action_clone // divisor
                 action_clone -= feerate_i * divisor
                 feerate_array.append(feerate_i)
-
-        mining_array = np.full(NB_DEVICES, feerate_array[0])
+        # TODO fixed value of mining rate
+        # mining_array = np.full(NB_DEVICES, feerate_array[0])
+        mining_array = np.full(NB_DEVICES, 3)
         processed_action = np.array([data_array, energy_array, mining_array]).flatten()
         processed_action = processed_action[:self.FEERATE_OFFSET+1]
         # print('processed action {}'.format(processed_action))

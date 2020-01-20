@@ -20,11 +20,13 @@ d_fr = 10  # federated data = 10Kbits
 d_train = 10  # local updated data
 d_blk = 100
 L_wait = 1  # 100ms
-BLK_TIME_SCALE = 1  # 1s
+BLK_TIME_SCALE = 4  # 1s
 
 # constant parameters for blockchain network
 LAMBDA = 4
 MIU = 5  # can serve 6 requests in 1 hour
+ATTACKER_RATES = [0.02, 0.1, 0.2, 0.4]
+ATTACK_SUCCESSFUL_PROB = [0.04, 0.2, 0.4, 0.8]
 
 """
 Results note:

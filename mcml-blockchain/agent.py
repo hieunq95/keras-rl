@@ -12,6 +12,7 @@ from keras.optimizers import Adam
 from rl.agents.dqn import DQNAgent
 from rl.policy import GreedyQPolicy, EpsGreedyQPolicy
 from rl.memory import SequentialMemory
+from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 
 from environment import Environment, MyProcessor
 from policy_epgreedy import MyEpsGreedy
@@ -33,8 +34,11 @@ Iteration = 150, charging ~ poisson(1), penalty = 1 * 5
 mempool = []
 workbook = xlsxwriter.Workbook('./build/results-{}.xlsx'.format(TEST_ITERATOR))
 writer = MCMLWriter(workbook)
-
 env = Environment(mempool, writer)
+
+log_filename = './build/dqn_mcml_log.json'
+# callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=NB_STEPS/2)]
+callbacks = [FileLogger(log_filename, interval=100)]
 
 policy = MyEpsGreedy(env, 0.9, 0.05, DECAY_EPSILON_END, writer)
 # policy = GreedyQPolicy()
@@ -65,7 +69,7 @@ dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmu
 # TODO: what learning rate is efficient enough
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
-history = dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None)
+history = dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None, callbacks=callbacks)
 
 print("****************************************"
       " End of training {}-th - switch to test" 

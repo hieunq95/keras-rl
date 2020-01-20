@@ -12,17 +12,20 @@ arrow_properties = dict(
     facecolor="black", width=0.5,
     headwidth=6, shrink=0.05)
 
-RANDOM_TEST = './build/results-random-1.xlsx'
-GREEDY_TEST = './build/results-greedy-1.xlsx'
-DRL_TEST = './build/results-6.xlsx'
+# RANDOM_TEST = './build/results-random-1.xlsx'
+RANDOM_TEST = './build/q_learning-result-44.xlsx'
+# GREEDY_TEST = './build/results-greedy-1.xlsx'
+GREEDY_TEST = './build/q_learning-result-43.xlsx'
+# DRL_TEST = './build/results-6.xlsx'
+DRL_TEST = './build/q_learning-result-41.xlsx'
 # Q_LEARNING_TEST = './build/q_learning-result-2.xlsx'
-Q_LEARNING_TEST = './build/q_learning-result-29.xlsx'
+Q_LEARNING_TEST = './build/q_learning-result-42.xlsx'
 DATA_Q1 = './build/q_learning-result-15.xlsx'
 DATA_Q2 = './build/q_learning-result-16.xlsx'
 DATA_Q3 = './build/q_learning-result-17.xlsx'
 DATA_Q4 = './build/q_learning-result-18.xlsx'
 
-EWM_WINDOW = 2
+EWM_WINDOW = 200
 TEST_TH = 314
 RANGE = 4000
 LATENCY_UNIT = 60  # seconds
@@ -54,21 +57,21 @@ data_q4_mean = [np.mean(df_data4['Training_data_mean_1'].values[3000:4000]),
                 np.mean(df_data4['Training_data_mean_2'].values[3000:4000]),
                 np.mean(df_data4['Training_data_mean_3'].values[3000:4000])]
 
-print(data_q1_mean, data_q2_mean, data_q3_mean, data_q4_mean)
-data_quality_legend = ('1:1:1', '2:2:1', '3:2:1', '4:2:1')
-plt.plot(data_quality_legend, np.array([data_q1_mean[0], data_q2_mean[0], data_q3_mean[0], data_q4_mean[0]]),
-         'b-*', label='Device-1')
-plt.plot(data_quality_legend, np.array([data_q1_mean[1], data_q2_mean[1], data_q3_mean[1], data_q4_mean[1]]),
-         'r-^', label='Device-2')
-plt.plot(data_quality_legend, np.array([data_q1_mean[2], data_q2_mean[2], data_q3_mean[2], data_q4_mean[2]]),
-         'g-o', label='Device-3')
-
-plt.xlabel('Data quality ratio $\eta_1 : \eta_2 : \eta_3 $ ')
-plt.ylabel('Number of data units taken')
-plt.ylim([600, 1400])
-plt.legend()
-plt.savefig('./results/data-quality-final.png')
-plt.show()
+# print(data_q1_mean, data_q2_mean, data_q3_mean, data_q4_mean)
+# data_quality_legend = ('1:1:1', '2:2:1', '3:2:1', '4:2:1')
+# plt.plot(data_quality_legend, np.array([data_q1_mean[0], data_q2_mean[0], data_q3_mean[0], data_q4_mean[0]]),
+#          'b-*', label='Device-1')
+# plt.plot(data_quality_legend, np.array([data_q1_mean[1], data_q2_mean[1], data_q3_mean[1], data_q4_mean[1]]),
+#          'r-^', label='Device-2')
+# plt.plot(data_quality_legend, np.array([data_q1_mean[2], data_q2_mean[2], data_q3_mean[2], data_q4_mean[2]]),
+#          'g-o', label='Device-3')
+#
+# plt.xlabel('Data quality ratio $\eta_1 : \eta_2 : \eta_3 $ ')
+# plt.ylabel('Number of data units taken')
+# plt.ylim([600, 1400])
+# plt.legend()
+# plt.savefig('./results/data-quality-final.png')
+# plt.show()
 
 # get the values for a given column
 energy = df['Energy'].values
@@ -116,38 +119,44 @@ energy_q_plot = []
 latency_q_plot = []
 payment_q_plot = []
 reward_q_plot = []
+data_q_plot = []
 
 energy_random_plot = []
 latency_random_plot = []
 payment_random_plot = []
 reward_random_plot = []
+data_random_plot = []
 
 energy_greedy_plot = []
 latency_greedy_plot = []
 payment_greedy_plot = []
 reward_greedy_plot = []
+data_greedy_plot = []
 
 for i in range(RANGE):
     reward_ewm_plot.append(reward_ewm[i])
     energy_ewm_plot.append(energy_ewm[i] * ENERGY_UNIT)
     latency_ewm_plot.append(latency_ewm[i] * LATENCY_UNIT)
     payment_ewm_plot.append(payment_ewm[i])
+    data_ewm_plot.append(data_ewm[i])
 
     reward_q_plot.append(reward_q[i])
     energy_q_plot.append(energy_q[i] * ENERGY_UNIT)
     latency_q_plot.append(latency_q[i] * LATENCY_UNIT)
     payment_q_plot.append(payment_q[i])
+    data_q_plot.append(data_q[i])
 
     energy_random_plot.append(energy_random[i] * ENERGY_UNIT)
     latency_random_plot.append(latency_random[i] * LATENCY_UNIT)
     payment_random_plot.append(payment_random[i])
     reward_random_plot.append(reward_random[i])
+    data_random_plot.append(data_random[i])
 
     energy_greedy_plot.append(energy_greedy[i] * ENERGY_UNIT)
     latency_greedy_plot.append(latency_greedy[i] * LATENCY_UNIT)
     payment_greedy_plot.append(payment_greedy[i])
     reward_greedy_plot.append(reward_greedy[i])
-
+    data_greedy_plot.append(data_greedy[i])
 
 episodes = np.arange(0, RANGE)
 """
@@ -158,22 +167,22 @@ mean_rewards = [np.mean(df['Total_reward'].values[3000:4000]),
                 np.mean(df_random['Total_reward'].values[3000:4000]),
                 np.mean(df_greedy['Total_reward'].values[3000:4000])
                 ]
-plt.annotate(
-    "DQN", xy=(1500, 160),
-    xytext=(1000, 300),
-    arrowprops=arrow_properties)
-plt.annotate(
-    "Q-leaning", xy=(3000, 120),
-    xytext=(3300, 30),
-    arrowprops=arrow_properties)
-plt.annotate(
-    "Greedy", xy=(3000, -30),
-    xytext=(3300, -170),
-    arrowprops=arrow_properties)
-plt.annotate(
-    "Random", xy=(3200, -460),
-    xytext=(3500, -560),
-    arrowprops=arrow_properties)
+# plt.annotate(
+#     "DQN", xy=(1500, 160),
+#     xytext=(1000, 300),
+#     arrowprops=arrow_properties)
+# plt.annotate(
+#     "Q-leaning", xy=(3000, 120),
+#     xytext=(3300, 30),
+#     arrowprops=arrow_properties)
+# plt.annotate(
+#     "Greedy", xy=(3000, -30),
+#     xytext=(3300, -170),
+#     arrowprops=arrow_properties)
+# plt.annotate(
+#     "Random", xy=(3200, -460),
+#     xytext=(3500, -560),
+#     arrowprops=arrow_properties)
 
 plt.plot(episodes, reward_ewm_plot, label='DQN')
 plt.plot(episodes, reward_q_plot, label='Q-learning')
@@ -182,7 +191,7 @@ plt.plot(episodes, reward_random_plot, label='Random')
 plt.xlabel('Episode')
 plt.ylabel('Cumulative reward')
 plt.legend()
-plt.savefig('./results/reward-final.png')
+# plt.savefig('./results/reward-final.png')
 plt.show()
 """
 ****************** Energy ***********************
@@ -209,17 +218,17 @@ plt.annotate(
     xytext=(3300, 7.9 * ENERGY_UNIT),
     arrowprops=arrow_properties)
 
-plt.plot(episodes, energy_ewm_plot, label='DQN')
-plt.plot(episodes, energy_q_plot, label='Q-learning')
-plt.plot(episodes, energy_random_plot, label='Random')
-plt.plot(episodes, energy_greedy_plot, label='Greedy')
-plt.arrow(1, -0.00010, 0, -0.00005, length_includes_head=True,
-          head_width=0.08, head_length=0.00002)
-plt.xlabel('Episode')
-plt.ylabel('Energy consumption (Joule)')
-plt.legend()
-plt.savefig('./results/energy-final.png')
-plt.show()
+# plt.plot(episodes, energy_ewm_plot, label='DQN')
+# plt.plot(episodes, energy_q_plot, label='Q-learning')
+# plt.plot(episodes, energy_random_plot, label='Random')
+# plt.plot(episodes, energy_greedy_plot, label='Greedy')
+# plt.arrow(1, -0.00010, 0, -0.00005, length_includes_head=True,
+#           head_width=0.08, head_length=0.00002)
+# plt.xlabel('Episode')
+# plt.ylabel('Energy consumption (Joule)')
+# plt.legend()
+# plt.savefig('./results/energy-final.png')
+# plt.show()
 
 """
 ****************** Latency ***********************
@@ -246,15 +255,15 @@ plt.annotate(
     xytext=(3300, 17 * LATENCY_UNIT),
     arrowprops=arrow_properties)
 
-plt.plot(episodes, latency_ewm_plot, label='DQN')
-plt.plot(episodes, latency_q_plot, label='Q-learning')
-plt.plot(episodes, latency_random_plot, label='Random')
-plt.plot(episodes, latency_greedy_plot, label='Greedy')
-plt.legend()
-plt.ylabel('Total latency (seconds)')
-plt.xlabel('Episode')
-plt.savefig('./results/latency-final.png')
-plt.show()
+# plt.plot(episodes, latency_ewm_plot, label='DQN')
+# plt.plot(episodes, latency_q_plot, label='Q-learning')
+# plt.plot(episodes, latency_random_plot, label='Random')
+# plt.plot(episodes, latency_greedy_plot, label='Greedy')
+# plt.legend()
+# plt.ylabel('Total latency (seconds)')
+# plt.xlabel('Episode')
+# plt.savefig('./results/latency-final.png')
+# plt.show()
 
 """
 ***************** Payment ************************
@@ -265,31 +274,31 @@ mean_payments = [np.mean(df['Payment'].values[3000:4000]),
                  np.mean(df_greedy['Payment'].values[3000:4000])
                  ]
 plt.annotate(
-    "DQN", xy=(1500, 2.44),
-    xytext=(1000, 2.52),
+    "DQN", xy=(3030, 5.63),
+    xytext=(3320, 5.4),
     arrowprops=arrow_properties)
 plt.annotate(
-    "Q-leaning", xy=(3000, 2.38),
-    xytext=(3300, 2.32),
+    "Q-leaning", xy=(3030, 5.12),
+    xytext=(3320, 4.92),
     arrowprops=arrow_properties)
 plt.annotate(
-    "Greedy", xy=(600, 2.58),
-    xytext=(0, 2.48),
+    "Greedy", xy=(600, 5.95),
+    xytext=(890, 5.75),
     arrowprops=arrow_properties)
 plt.annotate(
-    "Random", xy=(2500, 2.15),
-    xytext=(1800, 2.03),
+    "Random", xy=(3030, 3.9),
+    xytext=(3320, 3.7),
     arrowprops=arrow_properties)
 
-plt.plot(episodes, payment_ewm_plot, label='DQN')
-plt.plot(episodes, payment_q_plot, label='Q-learning')
-plt.plot(episodes, payment_random_plot, label='Random')
-plt.plot(episodes, payment_greedy_plot, label='Greedy')
-plt.legend()
-plt.ylabel('Total payment')
-plt.xlabel('Episode')
-plt.savefig('./results/payment-final.png')
-plt.show()
+# plt.plot(episodes, data_ewm_plot, label='DQN')
+# plt.plot(episodes, data_q_plot, label='Q-learning')
+# plt.plot(episodes, data_random_plot, label='Random')
+# plt.plot(episodes, data_greedy_plot, label='Greedy')
+# plt.legend()
+# plt.ylabel('Average data units/iteration')
+# plt.xlabel('Episode')
+# plt.savefig('./results/data-units.pdf')
+# plt.show()
 
 """
 ************************ Mining rate *************************
@@ -325,19 +334,31 @@ for i in range(RANGE):
     avg_mining_rates_3.append(mining_rate_3[i])
     avg_mining_rates_4.append(mining_rate_4[i])
 
-plt.plot(episodes, avg_mining_rates_1, label='$ \lambda = 1$')
-plt.plot(episodes, avg_mining_rates_2, label='$ \lambda = 2$')
-plt.plot(episodes, avg_mining_rates_3, label='$ \lambda = 3$')
-plt.plot(episodes, avg_mining_rates_4, label='$ \lambda = 4$')
-plt.xlabel('Episode')
-plt.ylabel('Average mining rate')
+# plt.plot(episodes, avg_mining_rates_1, label='$ \lambda = 1$')
+# plt.plot(episodes, avg_mining_rates_2, label='$ \lambda = 2$')
+# plt.plot(episodes, avg_mining_rates_3, label='$ \lambda = 3$')
+# plt.plot(episodes, avg_mining_rates_4, label='$ \lambda = 4$')
+# plt.xlabel('Episode')
+# plt.ylabel('Average mining rate')
+# plt.legend()
+# plt.savefig('./results/mining-final.png')
+# plt.show()
+# print('Mean values:\n Reward: {}\n Energy: {},\n Latency: {},\n Payment: {},\n Mining rate: {}'
+#       .format(mean_rewards, mean_energies, mean_latencies, mean_payments, mining_rates))
+
+"""
+Payment function visualization
+"""
+x_asis = np.arange(1, 11)
+payment_costs = [0.8 / np.log(1+m) for m in range(1, 11)]
+plt.plot(x_asis, payment_costs, '-^')
+plt.xlabel('Number of pending transactions $m$')
+plt.ylabel('Cost paid to the mining winner')
+plt.xticks(x_asis)
+plt.grid(b=True, which='both', axis='both', linestyle='-.', linewidth=0.2)
 plt.legend()
-plt.savefig('./results/mining-final.png')
+plt.savefig('./results/payment-to-winner.pdf')
 plt.show()
-print('Mean values:\n Reward: {}\n Energy: {},\n Latency: {},\n Payment: {},\n Mining rate: {}'
-      .format(mean_rewards, mean_energies, mean_latencies, mean_payments, mining_rates))
-
-
 
 
 

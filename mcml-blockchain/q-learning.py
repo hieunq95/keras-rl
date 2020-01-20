@@ -11,6 +11,14 @@ from environment import Environment, MyProcessor
 from writer_v1 import MCMLWriter
 from config import MEMPOOL_MAX, CPU_SHARES, CAPACITY_MAX, ENERGY_MAX, DATA_MAX, MINING_RATE, NB_DEVICES
 from policy_epgreedy import MyEpsGreedy
+import json
+
+# For statistic
+json_data = {}
+json_data['episode'] = []
+json_data['episode_reward'] = []
+json_data['mean_q'] = []
+json_data['mean_eps'] = []
 
 def array_to_scalar(arr, base1, base2):
     """
@@ -33,7 +41,7 @@ def array_to_scalar(arr, base1, base2):
 
 # Hyperparameters
 alpha = 0.1
-gamma = 0.9
+gamma = 0.99
 epsilon_max = 0.9
 epsilon_min = 0.05
 epsilon_trained = 2000
@@ -41,7 +49,7 @@ epsilon_decay = (epsilon_max - epsilon_min) / epsilon_trained
 
 # Training parameters
 NB_EPISODES = 4000
-TEST_ID = 30
+TEST_ID = 45
 episode = 0
 epsilon = epsilon_max
 
@@ -70,6 +78,7 @@ for i in range(NB_EPISODES):
     episode_reward = 0
     steps, reward = 0, 0
     done = False
+    max_q_array = []
     if epsilon >= epsilon_min + epsilon_decay:
         epsilon -= epsilon_decay
     else:
@@ -99,9 +108,20 @@ for i in range(NB_EPISODES):
         steps += 1
 
     episode += 1
+    # Save data to json file
+    json_data['episode'].append(episode)
+    json_data['episode_reward'].append(int(episode_reward))
+    json_data['mean_eps'].append(epsilon)
+
+    for k in range(state_space_size):
+        max_q_array.append(np.amax(q_table[k]))
+    json_data['mean_q'].append(np.mean(max_q_array))
 
     print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}'
           .format(episode, epsilon, episode_reward, steps, episode_reward / steps))
+
+with open('./build/q_learning_log_{}.json'.format(TEST_ID), 'w') as outfile:
+    json.dump(json_data, outfile)
 # End of training
 print('********************* End Q-Learning test-id: {} ***********************'.format(TEST_ID))
 workbook.close()
