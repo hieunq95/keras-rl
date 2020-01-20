@@ -158,11 +158,11 @@ class AV_Environment(gym.Env):
 
         return 0
 
-
     def get_reward(self, state, action):
         unexpected_ev_occurs = self.risk_assessment(state)
         channel_state = state[1]
         nb_bad_bits = state[2] + state[3] + state[4] + state[5]
+        # nb_bad_bits = 0
         reward = 0
         if action == 0:
             if unexpected_ev_occurs == 0:

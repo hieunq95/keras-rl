@@ -6,7 +6,8 @@ import pandas
 import numpy as np
 from matplotlib import rc
 
-def learning_curve(files, evaluated_value, ewmw):
+
+def learning_curve(files, evaluated_value, ewmw, titles):
     """
     Input: files - an string array of files' path
     """
@@ -21,18 +22,28 @@ def learning_curve(files, evaluated_value, ewmw):
                 x_array.append(i)
                 y_array.append(ewm_data[i])
                 i += 1
-        if f.find('dqn') > 0:
+        if f.find('dqn') > 0 and f.find('d_dqn') < 0:
             plt.plot(x_array, y_array, label='DQN')
+            print('Optimal DQN: {}'.format(np.mean(y_array[1500:])))
+        elif f.find('d_dqn') > 0:
+            plt.plot(x_array, y_array, label='DDQN')
+            print('Optimal Double DQN: {}'.format(np.mean(y_array[1500:])))
         elif f.find('q_learning') > 0:
             plt.plot(x_array, y_array, label='Q-learning')
+            print('Optimal Q-learning: {}'.format(np.mean(y_array[1500:])))
+        elif f.find('win_stay') > 0:
+            plt.plot(x_array, y_array, label='Win-stay, lose-shift')
+            print('Optimal Win-stay, Lose shift: {}'.format(np.mean(y_array[1500:])))
         else:
             plt.plot(x_array, y_array, label='Alternative switching')
+            print('Optimal Alternative switching: {}'.format(np.mean(y_array[1500:])))
 
-    plt.xlabel('Episode', fontsize=15)
-    plt.ylabel('Total reward', fontsize=15)
+    plt.xlabel('{}'.format(titles[0]), fontsize=15)
+    plt.ylabel('{}'.format(titles[1]), fontsize=15)
     plt.legend()
     plt.savefig('./results/{}.pdf'.format(EVALUATED_VALUE))
     plt.show()
+
 
 def line_graph(x_axis, nb_lines, files, evaluated_value, averaged_point, axis_titles, output):
     """
@@ -62,28 +73,31 @@ def line_graph(x_axis, nb_lines, files, evaluated_value, averaged_point, axis_ti
     plt.xticks(x_asis)
     plt.grid(b=True, which='both', axis='both', linestyle='-.', linewidth=0.2)
     plt.legend()
-    plt.savefig('./results/{}.pdf'.format(output_file))
+    # plt.savefig('./results/{}.pdf'.format(output_file))
     plt.show()
+
+
 """
-loss mae mean_q mean_eps nb_episode_steps nb_steps episode duration nb_unexpected_ev
-#  episode_reward mean_action throughput wrong_mode_actions 
+loss mae mean_eps nb_episode_steps nb_steps episode duration nb_unexpected_ev
+#  episode_reward mean_action throughput wrong_mode_actions mean_q
 """
 EWM_WINDOW = 20
-EVALUATED_VALUE = 'episode_reward'
-DATA = './logs/dqn_AV_Radar-v1_log_50.json'
-# DATA_REF = './logs/switch_AV_Radar_log_50.json'
-# DATA = './logs/switch_AV_Radar_log_50.json'
-DATA_REF = './logs/q_learning_AV_Radar_log_50.json'
-DATA_REF2 = './logs/switch_AV_Radar_log_50.json'
-files = [DATA, DATA_REF, DATA_REF2]
-learning_curve(files, EVALUATED_VALUE, EWM_WINDOW)
+EVALUATED_VALUE = 'mean_action'
+DATA = './logs/dqn_AV_Radar-v1_log_67.json'
+DATA_REF = './logs/q_learning_AV_Radar_log_68.json'
+DATA_REF2 = './logs/switch_AV_Radar_log_67.json'
+DATA_REF3 = './logs/win_stay_log_59.json'
+DATA_REF4 = './logs/d_dqn_AV_Radar-v1_log_60.json'
+
+files = [DATA, DATA_REF]
+titles = ['Episode', 'Average action']
+learning_curve(files, EVALUATED_VALUE, EWM_WINDOW, titles)
 
 x_asis = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 files_array_1 = ['./logs/dqn_AV_Radar-v1_log_{}.json'.format(k) for k in range(36, 46)]
 files_array_2 = ['./logs/q_learning_AV_Radar_log_{}.json'.format(k) for k in range(36, 46)]
 files_array_3 = ['./logs/switch_AV_Radar_log_{}.json'.format(k) for k in range(36, 46)]
-
 
 files_line_graph = [files_array_1, files_array_2, files_array_3]
 axis_titles = [r'$\rho_1^c$', 'Miss detection probability']

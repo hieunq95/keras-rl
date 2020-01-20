@@ -13,13 +13,15 @@ from rl.core import Processor
 from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 
 from environment import AV_Environment
-from config import test_parameters
+from config import test_parameters, transition_probability, unexpected_ev_prob, state_space_size, action_space_size
 from logger import Logger
 
 TEST_ID = test_parameters['test_id']
 NB_STEPS = test_parameters['nb_steps']
 EPSILON_LINEAR_STEPS = test_parameters['nb_epsilon_linear']
 TARGET_MODEL_UPDATE = test_parameters['target_model_update']
+GAMMA = test_parameters['gamma']
+DOUBLE_DQN = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['train', 'test'], default='train')
@@ -42,17 +44,21 @@ print(model.summary())
 
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
                target_model_update=TARGET_MODEL_UPDATE, policy=policy,
-               enable_double_dqn=False)
+               enable_double_dqn=DOUBLE_DQN, gamma=GAMMA)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
-print("****************************************"
-      " Start of training {}-th " 
-      "****************************************".format(TEST_ID))
+print('********************* Start {}DQN - test-id: {} ***********************'.
+      format('DOUBLE-' if DOUBLE_DQN else '', TEST_ID))
+print('************************************************************************** \n '
+      '**************************** Simulation parameters*********************** \n'
+      '{} \n {} \n {} \n {} \n {} \n'.format(transition_probability, unexpected_ev_prob, state_space_size,
+                                          action_space_size, test_parameters)
+      + '*************************************************************************** \n')
 
 if args.mode == 'train':
     weights_filename = './logs/dqn_{}_weights_{}.h5f'.format(args.env_name, TEST_ID)
     checkpoint_weights_filename = './logs/dqn_' + args.env_name + '_weights_{step}.h5f'
-    log_filename = './logs/dqn_{}_log_{}.json'.format(args.env_name, TEST_ID)
+    log_filename = './logs/{}dqn_{}_log_{}.json'.format('d-' if DOUBLE_DQN else '', args.env_name, TEST_ID)
     callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=NB_STEPS/2)]
     callbacks += [Logger(log_filename, environment=env, interval=100)]
     dqn.fit(env, nb_steps=NB_STEPS, visualize=False, verbose=2, nb_max_episode_steps=None, callbacks=callbacks)

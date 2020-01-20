@@ -55,12 +55,13 @@ def get_key_from_value(dict, value):
     #     raise Exception('Invalid key value')
     return key
 
+
 learning_parameters = {
     'alpha': 0.1,
-    'gamma': 0.9,
+    'gamma': 0.99,
     'eps_max': 1,
     'eps_min': 0.1,
-    'nb_episodes': 5000,
+    'nb_episodes': 10000,
     'linear_episodes': 1500,
     'eps_decay': (1 - 0.1) / 1500,
 }
@@ -160,8 +161,8 @@ for e in range(1, learning_parameters['nb_episodes'] + 1):
         max_q_array.append(np.amax(q_table['{}'.format(k)]))
     json_data['mean_q'].append(np.mean(max_q_array))
 
-    print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}, Mean_q: {}'
-          .format(e, epsilon, episode_reward, steps, episode_reward / steps, json_data['mean_q'][e - 1]))
+    print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}, Mean action: {}, Mean_q: {}'
+          .format(e, epsilon, episode_reward, steps, episode_reward / steps, np.mean(actions), json_data['mean_q'][e - 1]))
 
 with open('./logs/q_learning_AV_Radar_log_{}.json'.format(TEST_ID), 'w') as outfile:
     json.dump(json_data, outfile)

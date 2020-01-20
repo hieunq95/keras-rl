@@ -55,7 +55,7 @@ class Logger(Callback):
         data += [('episode', episode), ('duration', duration),
                  ('nb_unexpected_ev', self.env.episode_observation['unexpected_ev_counter']), ('mean_action', np.mean(self.actions)),
                  ('wrong_mode_actions', self.env.episode_observation['wrong_mode_actions']),
-                 ('throughput', self.env.episode_observation['throughput'] / 400)]
+                 ('throughput', self.env.episode_observation['throughput'] / self.env.episode_observation['step_counter'])]
         for key, value in data:
             if key not in self.data:
                 self.data[key] = []

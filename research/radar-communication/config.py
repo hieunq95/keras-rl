@@ -21,7 +21,7 @@ unexpected_ev_prob = {
     'occur_with_good_road': UNEXPECTED_EV_PROB / 10,
     'occur_with_bad_weather': UNEXPECTED_EV_PROB,
     'occur_with_good_weather': UNEXPECTED_EV_PROB / 10,
-    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 2,  # variable 1
+    'occur_with_fast_speed': UNEXPECTED_EV_PROB * 10,  # variable 1
     'occur_with_slow_speed': UNEXPECTED_EV_PROB / 10,
     'occur_with_moving_object': UNEXPECTED_EV_PROB,
     'occur_with_static_object': UNEXPECTED_EV_PROB / 10,
@@ -42,10 +42,11 @@ action_space_size = {
 
 #  Parameters for testing DQN agent
 test_parameters = {
-    'test_id': 46,
-    'nb_steps': 1000000,
+    'test_id': 68,
+    'nb_steps': 2000000,
     'nb_epsilon_linear': 600000,
     'target_model_update': 1e-3,
+    'gamma': 0.99,
 }
 
 """

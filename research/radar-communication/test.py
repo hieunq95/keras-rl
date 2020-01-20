@@ -15,18 +15,20 @@ json_data['mean_action'] = []
 json_data['wrong_mode_actions'] = []
 json_data['throughput'] = []
 
+
 def alternative_switch_action(t):
     if t % 2 == 0:
         return 0
     else:
         return 1
 
+
 print(env.observation_space, env.action_space)
 histogram = []
 x_array = []
 y_array = []
 y_value = 0
-for e in range(1, 2501):
+for e in range(1, 5001):
     plot_target = 0
     cumulative_reward = 0
     x_array.append(e)
