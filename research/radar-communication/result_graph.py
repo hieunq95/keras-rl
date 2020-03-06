@@ -83,10 +83,8 @@ loss mae mean_eps nb_episode_steps nb_steps episode duration nb_unexpected_ev
 """
 EWM_WINDOW = 20
 EVALUATED_VALUE = 'mean_action'
-# DATA = './logs/dqn_AV_Radar-v1_log_50.json'
-# DATA_REF = './logs/q_learning_AV_Radar_log_75.json'
-DATA = './logs/dqn_AV_Radar-v1_log_96.json'
-DATA_REF = './logs/q_learning_AV_Radar_log_96.json'
+DATA = './logs/dqn_AV_Radar-v1_log_50.json'
+DATA_REF = './logs/q_learning_AV_Radar_log_75.json'
 DATA_REF2 = './logs/switch_AV_Radar_log_50.json'
 DATA_REF3 = './logs/win_stay_log_59.json'
 DATA_REF4 = './logs/d_dqn_AV_Radar-v1_log_60.json'

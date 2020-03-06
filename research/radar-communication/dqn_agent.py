@@ -43,7 +43,7 @@ model.add(Dense(nb_actions, activation='linear'))
 
 print(model.summary())
 
-dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=1000,
+dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
                target_model_update=TARGET_MODEL_UPDATE, policy=policy,
                enable_double_dqn=DOUBLE_DQN, gamma=GAMMA)
 dqn.compile(Adam(lr=ALPHA), metrics=['mae'])
