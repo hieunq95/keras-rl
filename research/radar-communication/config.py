@@ -42,11 +42,12 @@ action_space_size = {
 
 #  Parameters for testing DQN agent
 test_parameters = {
-    'test_id': 68,
-    'nb_steps': 2000000,
-    'nb_epsilon_linear': 600000,
+    'test_id': 96,
+    'nb_steps': 2500 * 400,
+    'nb_epsilon_linear': 1500 * 400,
     'target_model_update': 1e-3,
     'gamma': 0.99,
+    'alpha': 0.01,
 }
 
 """
@@ -112,65 +113,65 @@ test_parameters = {
 'occur_with_moving_object': UNEXPECTED_EV_PROB,
 --------------------------
 --------------------------
-'test_id': 36,
+'test_id': 36, 81
 'channel_sw_bad_to_bad': 0.1 * 1,  # 0.1
 --------------------------
-'test_id': 37,
+'test_id': 37, 82
 'channel_sw_bad_to_bad': 0.1 * 2,  # 0.2
 --------------------------
-'test_id': 38,
+'test_id': 38, 83
 'channel_sw_bad_to_bad': 0.1 * 3,  # 0.3
 --------------------------
-'test_id': 39,
+'test_id': 39, 84
 'channel_sw_bad_to_bad': 0.1 * 4,  # 0.4
 --------------------------
-'test_id': 40,
+'test_id': 40, 85
 'channel_sw_bad_to_bad': 0.1 * 5,  # 0.5
 --------------------------
-'test_id': 41,
+'test_id': 41, 86
 'channel_sw_bad_to_bad': 0.1 * 6,  # 0.6
 --------------------------
-'test_id': 42,
+'test_id': 42, 87
 'channel_sw_bad_to_bad': 0.1 * 7,  # 0.7
 --------------------------
-'test_id': 43,
+'test_id': 43, 88
 'channel_sw_bad_to_bad': 0.1 * 8,  # 0.8
 --------------------------
-'test_id': 44,
+'test_id': 44, 89
 'channel_sw_bad_to_bad': 0.1 * 9,  # 0.9
 --------------------------
-'test_id': 45,
+'test_id': 45, 90
 'channel_sw_bad_to_bad': 0.1 * 10,  # 10
 --------------------------
 --------------------------
-'test_id': 46,
+'test_id': 46, 71
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 2, # 0.1
 --------------------------
-'test_id': 47,
+'test_id': 47, 72
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 4, # 0.2
 -------------------------
-'test_id': 48,
+'test_id': 48, 73
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 6, # 0.3
 --------------------------
-'test_id': 49,
+'test_id': 49, 74
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 8, # 0.4
 --------------------------
-'test_id': 50,
+'test_id': 50, 75
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 10, # 0.5
 --------------------------
-'test_id': 51,
+'test_id': 51, 76
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 12, # 0.6
 --------------------------
-'test_id': 52,
+'test_id': 52, 77
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 14, # 0.7
 --------------------------
-'test_id': 53,
+'test_id': 53, 78
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 16, # 0.8
 --------------------------
-'test_id': 54,
+'test_id': 54, 79
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 18, # 0.9
 --------------------------
-'test_id': 55,
+'test_id': 55, 80
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20, # 1.0
 --------------------------
 

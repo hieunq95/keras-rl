@@ -57,13 +57,13 @@ def get_key_from_value(dict, value):
 
 
 learning_parameters = {
-    'alpha': 0.1,
-    'gamma': 0.99,
+    'alpha': test_parameters['alpha'],
+    'gamma': test_parameters['gamma'],
     'eps_max': 1,
     'eps_min': 0.1,
-    'nb_episodes': 10000,
-    'linear_episodes': 1500,
-    'eps_decay': (1 - 0.1) / 1500,
+    'nb_episodes': int(test_parameters['nb_steps'] / 400),
+    'linear_episodes': int(test_parameters['nb_epsilon_linear'] / 400),
+    'eps_decay': (1 - 0.1) / (test_parameters['nb_epsilon_linear'] / 400),
 }
 # Environment set up
 env = AV_Environment()

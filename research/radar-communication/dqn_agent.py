@@ -21,6 +21,7 @@ NB_STEPS = test_parameters['nb_steps']
 EPSILON_LINEAR_STEPS = test_parameters['nb_epsilon_linear']
 TARGET_MODEL_UPDATE = test_parameters['target_model_update']
 GAMMA = test_parameters['gamma']
+ALPHA = test_parameters['alpha']
 DOUBLE_DQN = False
 
 parser = argparse.ArgumentParser()
@@ -42,10 +43,10 @@ model.add(Dense(nb_actions, activation='linear'))
 
 print(model.summary())
 
-dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
+dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=1000,
                target_model_update=TARGET_MODEL_UPDATE, policy=policy,
                enable_double_dqn=DOUBLE_DQN, gamma=GAMMA)
-dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+dqn.compile(Adam(lr=ALPHA), metrics=['mae'])
 
 print('********************* Start {}DQN - test-id: {} ***********************'.
       format('DOUBLE-' if DOUBLE_DQN else '', TEST_ID))
