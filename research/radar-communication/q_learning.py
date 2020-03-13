@@ -47,6 +47,11 @@ def generate_retrieval_table(state_size):
     return state_retrieval
 
 def get_key_from_value(dict, value):
+    """
+    :param dict: retrieval table
+    :param value: current state in array
+    :return:
+    """
     key = ''
     for k, v in dict.items():
         if (v == value).all():
@@ -78,6 +83,9 @@ json_data['wrong_mode_actions'] = []
 json_data['throughput'] = []
 json_data['mean_q'] = []
 json_data['mean_eps'] = []
+json_data['avg_reward'] = []
+json_data['avg_sim_reward'] = []
+json_data['avg_reward_error'] = []
 
 histogram = []
 x_array = []
@@ -107,7 +115,8 @@ print('*************************************************************************
                                           action_space_size, learning_parameters)
       + '*************************************************************************** \n')
 
-epsilon = learning_parameters['eps_max']
+# epsilon = learning_parameters['eps_max']
+epsilon = learning_parameters['eps_min']
 
 for e in range(1, learning_parameters['nb_episodes'] + 1):
     actions = []
@@ -118,10 +127,10 @@ for e in range(1, learning_parameters['nb_episodes'] + 1):
     q_state = get_key_from_value(retrieval_table, actual_state)
     steps, reward, episode_reward = 0, 0, 0
     done = False
-    if epsilon >= learning_parameters['eps_min'] + learning_parameters['eps_decay']:
-        epsilon -= learning_parameters['eps_decay']
-    else:
-        epsilon = learning_parameters['eps_min']
+    # if epsilon >= learning_parameters['eps_min'] + learning_parameters['eps_decay']:
+    #     epsilon -= learning_parameters['eps_decay']
+    # else:
+    #     epsilon = learning_parameters['eps_min']
 
     while not done:
         if np.random.uniform(0, 1) < epsilon:
@@ -156,16 +165,37 @@ for e in range(1, learning_parameters['nb_episodes'] + 1):
     json_data['wrong_mode_actions'].append(wrong_mode_actions)
     json_data['throughput'].append(env.episode_observation['throughput'] / steps)
     json_data['mean_eps'].append(epsilon)
+    json_data['avg_reward'].append(episode_reward / steps)
 
     for k in range(q_state_size):
         max_q_array.append(np.amax(q_table['{}'.format(k)]))
     json_data['mean_q'].append(np.mean(max_q_array))
 
     print('Episode: {}, Epsilon: {}, Total reward: {}, Steps: {}, Average reward: {}, Mean action: {}, Mean_q: {}'
-          .format(e, epsilon, episode_reward, steps, episode_reward / steps, np.mean(actions), json_data['mean_q'][e - 1]))
+          .format(e, epsilon, episode_reward, steps, episode_reward / steps, np.mean(actions),
+                  json_data['mean_q'][- 1]))
 
-with open('./logs/q_learning_AV_Radar_log_{}.json'.format(TEST_ID), 'w') as outfile:
-    json.dump(json_data, outfile)
+    if test_parameters['add_simulation']:
+        # Averaging total reward of different scenarios using current Q-table
+        s0 = get_key_from_value(retrieval_table, env.state)
+        r_array = []
+        simulation_steps = q_state_size * 10
+        for i in range(simulation_steps):
+            a0 = np.argmax(q_table['{}'.format(s0)])
+            s0, r, d, _ = env.step(a0)
+            s0 = get_key_from_value(retrieval_table, s0)
+            r_array.append(r)
+        ave_r = np.mean(r_array)
+        total_r = np.sum(r_array)
+        # Saving into json_data
+        json_data['avg_sim_reward'].append(ave_r)
+        json_data['avg_reward_error'].append(ave_r - episode_reward / steps)
+
+        print(' ********* Episode: {}, Simulation steps: {}, Total reward: {}, Average total reward: {}, Average error: {} '
+              '*********'.format(e, simulation_steps, total_r, ave_r, json_data['avg_reward_error'][-1]))
+
+    with open('./logs/q_learning_AV_Radar_log_{}.json'.format(TEST_ID), 'w') as outfile:
+        json.dump(json_data, outfile)
 
 # End of training
 print('********************* End Q-Learning test-id: {} ***********************'.format(TEST_ID))

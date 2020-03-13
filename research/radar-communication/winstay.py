@@ -6,6 +6,7 @@ from config import test_parameters
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import array as arr
 
 import h5py
 filename = './logs/dqn_AV_Radar-v1_weights_67.h5f'
@@ -40,6 +41,10 @@ def win_stay(a, r):
     else:
         return (a + 1) % 2
 
+x = [1, 2, 3 ,4, 7, 5]
+print(x)
+x1 = arr.array([1,1,1,1,1,1])
+print(x1)
 
 # for e in range(1, 2501):
 #     episode_reward = 0

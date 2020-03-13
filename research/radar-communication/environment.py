@@ -16,6 +16,7 @@ class AV_Environment(gym.Env):
             'unexpected_ev_counter': 0,
             'wrong_mode_actions': 0,
             'throughput': 0,
+            'sim_reward': 0,
         }
         self.seed(123)
         self.state = self.reset()

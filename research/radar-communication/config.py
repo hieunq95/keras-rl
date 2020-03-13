@@ -42,12 +42,13 @@ action_space_size = {
 
 #  Parameters for testing DQN agent
 test_parameters = {
-    'test_id': 96,
+    'test_id': 110,
     'nb_steps': 2500 * 400,
-    'nb_epsilon_linear': 1500 * 400,
+    'nb_epsilon_linear': 500 * 400,
     'target_model_update': 1e-3,
     'gamma': 0.99,
     'alpha': 0.01,
+    'add_simulation': False,
 }
 
 """
@@ -173,6 +174,18 @@ test_parameters = {
 --------------------------
 'test_id': 55, 80
 'occur_with_fast_speed': UNEXPECTED_EV_PROB * 20, # 1.0
+--------------------------
+--------------------------
+
+'eps_min': 0.1 : 102
+--------------------------
+'eps_min': 0.05 : 103
+--------------------------
+'eps_min': 0.1 : 104
+--------------------------
+'eps_min': 0.1 : 105, tanh(r_t)
+--------------------------
+'eps_min': 0.1 : 106
 --------------------------
 
 

@@ -9,19 +9,20 @@ from keras.optimizers import Adam
 from rl.agents.dqn import DQNAgent
 from rl.policy import LinearAnnealedPolicy, EpsGreedyQPolicy
 from rl.memory import SequentialMemory
-from rl.core import Processor
 from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 
 from environment import AV_Environment
 from config import test_parameters, transition_probability, unexpected_ev_prob, state_space_size, action_space_size
 from logger import Logger
+from AV_Processor import AVProcessor
 
 TEST_ID = test_parameters['test_id']
 NB_STEPS = test_parameters['nb_steps']
 EPSILON_LINEAR_STEPS = test_parameters['nb_epsilon_linear']
 TARGET_MODEL_UPDATE = test_parameters['target_model_update']
 GAMMA = test_parameters['gamma']
-ALPHA = test_parameters['alpha']
+# ALPHA = test_parameters['alpha']
+ALPHA = 0.001
 DOUBLE_DQN = False
 
 parser = argparse.ArgumentParser()
@@ -32,8 +33,10 @@ args = parser.parse_args()
 
 env = AV_Environment()
 nb_actions = env.action_space.n
-policy = LinearAnnealedPolicy(EpsGreedyQPolicy(), attr='eps', value_max=1., value_min=.1, value_test=.05,
-                              nb_steps=EPSILON_LINEAR_STEPS)
+# policy = LinearAnnealedPolicy(EpsGreedyQPolicy(), attr='eps', value_max=1., value_min=.1, value_test=.05,
+#                               nb_steps=EPSILON_LINEAR_STEPS)
+policy = EpsGreedyQPolicy(eps=.1)
+processor = AVProcessor(env)
 memory = SequentialMemory(limit=50000, window_length=1)
 model = Sequential()
 model.add(Flatten(input_shape=(1,) + env.observation_space.nvec.shape))
@@ -44,9 +47,10 @@ model.add(Dense(nb_actions, activation='linear'))
 print(model.summary())
 
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=100,
-               target_model_update=TARGET_MODEL_UPDATE, policy=policy,
+               target_model_update=TARGET_MODEL_UPDATE, policy=policy, processor=processor,
                enable_double_dqn=DOUBLE_DQN, gamma=GAMMA)
 dqn.compile(Adam(lr=ALPHA), metrics=['mae'])
+processor.add_agent(dqn)
 
 print('********************* Start {}DQN - test-id: {} ***********************'.
       format('DOUBLE-' if DOUBLE_DQN else '', TEST_ID))

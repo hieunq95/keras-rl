@@ -55,10 +55,10 @@ def line_graph(x_axis, nb_lines, files, evaluated_value, averaged_point, axis_ti
             value_array = []
             with open(files[l][k]) as json_file:
                 data = json.load(json_file)
-                # for p, q in zip(data[evaluated_value], data['nb_unexpected_ev']):
-                #     value_array.append(p / q)
-                for p in data[evaluated_value]:
-                    value_array.append(p)
+                for p, q in zip(data[evaluated_value], data['nb_unexpected_ev']):
+                    value_array.append(p / q)
+                # for p in data[evaluated_value]:
+                #     value_array.append(p)
                 line_values.append(np.mean(value_array[averaged_point:]))
         print(line_values)
         if files[l][0].find('dqn') > 0:
@@ -79,30 +79,31 @@ def line_graph(x_axis, nb_lines, files, evaluated_value, averaged_point, axis_ti
 
 """
 loss mae mean_eps nb_episode_steps nb_steps episode duration nb_unexpected_ev
-#  episode_reward mean_acmean_actiontion throughput wrong_mode_actions mean_q
+#  episode_reward mean_action throughput wrong_mode_actions mean_q
+    avg_reward avg_sim_reward avg_reward_error
 """
-EWM_WINDOW = 20
-EVALUATED_VALUE = 'mean_action'
-DATA = './logs/dqn_AV_Radar-v1_log_50.json'
-DATA_REF = './logs/q_learning_AV_Radar_log_75.json'
+EWM_WINDOW = 10
+EVALUATED_VALUE = 'episode_reward'
+DATA = './logs/dqn_AV_Radar-v1_log_108.json'  # DQN vs Q-learning: 50 vs. 75
+DATA_REF = './logs/q_learning_AV_Radar_log_109.json'
 DATA_REF2 = './logs/switch_AV_Radar_log_50.json'
-DATA_REF3 = './logs/win_stay_log_59.json'
-DATA_REF4 = './logs/d_dqn_AV_Radar-v1_log_60.json'
+DATA_REF3 = './logs/dqn_AV_Radar-v1_log_97_2.json'
+DATA_REF4 = './logs/q_learning_AV_Radar_log_97_2.json'
 
-files = [DATA, DATA_REF]
-titles = ['Episode', 'Total reward']
+files = [DATA, DATA_REF] # data: avg_sim_reward -> avg_reward
+titles = ['Episode', EVALUATED_VALUE]
 learning_curve(files, EVALUATED_VALUE, EWM_WINDOW, titles, 2000)
 
 x_asis = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-files_array_1 = ['./logs/dqn_AV_Radar-v1_log_{}.json'.format(k) for k in range(36, 46)]
-files_array_2 = ['./logs/q_learning_AV_Radar_log_{}.json'.format(k) for k in range(81, 91)]
-files_array_3 = ['./logs/switch_AV_Radar_log_{}.json'.format(k) for k in range(36, 46)]
+files_array_1 = ['./logs/dqn_AV_Radar-v1_log_{}.json'.format(k) for k in range(46, 56)]
+files_array_2 = ['./logs/q_learning_AV_Radar_log_{}.json'.format(k) for k in range(71, 81)]
+files_array_3 = ['./logs/switch_AV_Radar_log_{}.json'.format(k) for k in range(46, 56)]
 
 files_line_graph = [files_array_1, files_array_2, files_array_3]
 # Miss detection probability    Throughput (packets/time units)
 # % radar action                Average reward
-axis_titles = ['$p_c$', '% radar action']
-output_file = EVALUATED_VALUE + '_vs_channel'
+axis_titles = ['$p_1^v$', 'Average miss detection probability']
+output_file = EVALUATED_VALUE + '_vs_speed'
 # line_graph(x_asis, 3, files_line_graph, EVALUATED_VALUE, 1500, axis_titles, output_file)
 

@@ -28,7 +28,8 @@ histogram = []
 x_array = []
 y_array = []
 y_value = 0
-for e in range(1, 5001):
+
+for e in range(1, int(test_parameters['nb_steps'] / 400) + 1):
     plot_target = 0
     cumulative_reward = 0
     x_array.append(e)
@@ -63,6 +64,8 @@ for e in range(1, 5001):
             json_data['mean_action'].append(np.mean(actions))
             json_data['wrong_mode_actions'].append(wrong_mode_actions)
             json_data['throughput'].append(env.episode_observation['throughput'] / 400)
+            print('Episode: {}, Total reward: {}, Steps: {}, Average reward: {}, Mean action: {}'
+                  .format(e, cumulative_reward, t, cumulative_reward / t, np.mean(actions)))
             env.reset()
             break
 
